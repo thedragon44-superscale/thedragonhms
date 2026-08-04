@@ -106,12 +106,43 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         
         @media (max-width: 768px) {
+            /* Push the main CTAs higher up the screen to avoid the collision zone */
+            .hero { padding-bottom: 120px !important; }
+            
             .hero h1 { font-size: 2.5rem; }
             .pro-con-grid { grid-template-columns: 1fr; gap: var(--space-lg); }
-            .hero-actions { flex-direction: column; }
+            
+            /* The Nuclear Button Stack Fix */
+            .hero-actions { 
+                flex-direction: column !important; 
+                align-items: center !important; 
+                gap: 15px !important; 
+                width: 100% !important;
+            }
+            .hero-actions .btn { 
+                width: 100% !important; 
+            }
+            
             .nav-links .btn { padding: 6px 12px; font-size: 0.85rem; }
-        }
 
+            /* Compact Floating Buttons - Stacked cleanly on the right */
+            .ui-switcher-btn {
+                bottom: 65px !important; 
+                left: auto !important;
+                right: 15px !important;
+                width: auto !important;
+                padding: 8px 16px !important;
+                font-size: 0.8rem !important;
+            }
+            .special-feature-btn {
+                bottom: 15px !important; 
+                left: auto !important;
+                right: 15px !important;
+                width: auto !important;
+                padding: 8px 16px !important;
+                font-size: 0.8rem !important;
+            }
+        }
         /* =========================================
            INTERACTIVE PORTFOLIO THEMES
            ========================================= */
@@ -197,7 +228,7 @@
             <span class="logo-text">The Dragon <span>HMS</span>.</span>
         </a>
         <div class="nav-links">
-            <a href="{{ url_for('login') }}" class="btn btn-primary">Client Login</a>
+            <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
         </div>
     </nav>
 
@@ -422,7 +453,7 @@
     </div>
 
     <!-- Floating Special Feature Triggers -->
-    <button onclick="openDnsModal()" class="special-feature-btn btn-dns">▶ Network Diagnostics</button>
+    <button onclick="openDnsModal()" class="special-feature-btn btn-dns">▶ Fingerprint Audit</button>
     <button onclick="openCsvModal()" class="special-feature-btn btn-csv">📊 POS Ledger Analyzer</button>
 
     <!-- CSV POS Ledger Analyzer Modal -->
@@ -488,37 +519,37 @@
         </div>
     </div>
 
-    <!-- DNS / IP Leak Tester Modal -->
+    <!-- Browser Fingerprint Audit Modal -->
     <div id="dns-modal" class="modal-overlay" onclick="closeDnsModal(event)" style="z-index: 3500;">
         <div class="modal-content" style="max-width: 600px;" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <h2>Network <span class="text-gradient">Diagnostics</span></h2>
+                <h2>Browser <span class="text-gradient">Fingerprint</span></h2>
                 <button class="modal-close" onclick="closeDnsModal()">&times;</button>
             </div>
             <div class="modal-body" style="padding: 20px;">
-                <button id="btn-run-dns" onclick="runDnsTest()" class="btn btn-blue" style="width: 100%; margin-bottom: 20px;">Execute Leak Test</button>
+                <button id="btn-run-dns" onclick="runAuditTest()" class="btn btn-blue" style="width: 100%; margin-bottom: 20px;">Execute Environment Audit</button>
                 
                 <div id="dns-results" style="display: none;">
                     <div class="dns-grid">
                         <div class="dns-box">
-                            <div class="dns-label">Public IP Address</div>
+                            <div class="dns-label">Operating System</div>
                             <div class="dns-value" id="dns-ip">Scanning...</div>
                         </div>
                         <div class="dns-box">
-                            <div class="dns-label">ISP / Organization</div>
+                            <div class="dns-label">Hardware Profile</div>
                             <div class="dns-value" id="dns-isp">Scanning...</div>
                         </div>
                         <div class="dns-box">
-                            <div class="dns-label">Geolocation Target</div>
+                            <div class="dns-label">Display Metrics</div>
                             <div class="dns-value" id="dns-loc">Scanning...</div>
                         </div>
                         <div class="dns-box">
-                            <div class="dns-label">WebRTC Leak Status</div>
-                            <div class="dns-value" id="dns-webrtc" style="color: var(--brand-orange);">Vulnerable</div>
+                            <div class="dns-label">System Timezone</div>
+                            <div class="dns-value" id="dns-webrtc" style="color: var(--brand-orange);">Scanning...</div>
                         </div>
                     </div>
                     <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 15px; text-align: center;">
-                        * This diagnostic tool pings external endpoints to reveal the exact footprint your browser is broadcasting to web servers.
+                        * This audit extracts local hardware data, demonstrating the system-level footprint your browser passively transmits to every website you visit.
                     </p>
                 </div>
             </div>
@@ -574,68 +605,50 @@
             }
         }
 
-        async function runDnsTest() {
+        function runAuditTest() {
             const btn = document.getElementById('btn-run-dns');
             const resultsDiv = document.getElementById('dns-results');
             
-            btn.innerText = "Analyzing Network Packets... ⏳";
+            btn.innerText = "Extracting System Data... ⏳";
             btn.disabled = true;
             resultsDiv.style.display = 'block';
             
             document.getElementById('dns-ip').innerText = "Scanning...";
             document.getElementById('dns-isp').innerText = "Scanning...";
             document.getElementById('dns-loc').innerText = "Scanning...";
-            document.getElementById('dns-webrtc').innerText = "Testing...";
+            document.getElementById('dns-webrtc').innerText = "Analyzing...";
             document.getElementById('dns-webrtc').style.color = "var(--text-main)";
 
-            const checkWebRTC = new Promise((resolve) => {
-                const rtc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
-                rtc.createDataChannel("rtc");
-                rtc.createOffer().then(offer => rtc.setLocalDescription(offer)).catch(() => resolve("Secure"));
+            // Add a dramatic delay to simulate heavy processing
+            setTimeout(() => {
+                // OS detection
+                const ua = navigator.userAgent;
+                let os = "Unknown OS";
+                if (ua.indexOf("Win") != -1) os = "Windows";
+                else if (ua.indexOf("Mac") != -1 && "ontouchend" in document) os = "iOS";
+                else if (ua.indexOf("Mac") != -1) os = "MacOS";
+                else if (ua.indexOf("Linux") != -1) os = "Linux";
+                else if (ua.indexOf("Android") != -1) os = "Android";
                 
-                let resolved = false;
-                rtc.onicecandidate = (event) => {
-                    if (event && event.candidate && event.candidate.candidate && !resolved) {
-                        const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
-                        const match = ipRegex.exec(event.candidate.candidate);
-                        if (match) {
-                            resolved = true;
-                            resolve(`Leaking: ${match[1]}`);
-                            rtc.onicecandidate = null;
-                        }
-                    }
-                };
-                setTimeout(() => { if (!resolved) resolve("Secure (No Leak)"); }, 2500);
-            });
-
-            try {
-                const ipResponse = await fetch('https://api.ipify.org?format=json');
-                const ipData = await ipResponse.json();
-                document.getElementById('dns-ip').innerText = ipData.ip;
-
-                const geoResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
-                const geoData = await geoResponse.json();
+                document.getElementById('dns-ip').innerText = os;
                 
-                document.getElementById('dns-isp').innerText = geoData.org || geoData.asn || "Unknown";
-                document.getElementById('dns-loc').innerText = `${geoData.city}, ${geoData.region}, ${geoData.country_name}`;
-
-                const rtcResult = await checkWebRTC;
-                const webrtcEl = document.getElementById('dns-webrtc');
-                webrtcEl.innerText = rtcResult;
-                if (rtcResult.includes("Leaking")) {
-                    webrtcEl.style.color = "var(--brand-orange)";
-                } else {
-                    webrtcEl.style.color = "var(--success)";
-                }
+                // Hardware
+                const cores = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} Cores` : "Unknown CPU";
+                const ram = navigator.deviceMemory ? `≥${navigator.deviceMemory}GB RAM` : "Unknown RAM";
+                document.getElementById('dns-isp').innerText = `${cores}, ${ram}`;
                 
-            } catch (error) {
-                console.error("Diagnostic Failed:", error);
-                document.getElementById('dns-ip').innerText = "Fetch Error";
-                document.getElementById('dns-isp').innerText = "Firewall Blocked";
-            } finally {
-                btn.innerText = "Diagnostics Complete";
+                // Display Metrics
+                document.getElementById('dns-loc').innerText = `${screen.width}x${screen.height} (${screen.colorDepth}-bit)`;
+                
+                // Timezone & Language
+                const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown Zone";
+                const lang = navigator.language || "Unknown Lang";
+                document.getElementById('dns-webrtc').innerText = `${tz} (${lang})`;
+                document.getElementById('dns-webrtc').style.color = "var(--brand-blue-light)";
+                
+                btn.innerText = "Audit Complete";
                 btn.disabled = false;
-            }
+            }, 1200);
         }
 
         // --- CSV LEDGER ANALYZER LOGIC ---
