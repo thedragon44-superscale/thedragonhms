@@ -19,6 +19,9 @@ from logging.handlers import RotatingFileHandler
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import smtplib
+from email.message import EmailMessage
+import threading
 
 load_dotenv()
 
@@ -95,6 +98,40 @@ ALLOWED_MIME_TYPES = {
     'image/png', 'image/jpeg', 'image/jpg',
     'video/mp4', 'video/webm'
 }
+
+# ==========================================
+# EMAIL CONFIGURATION & THREADING
+# ==========================================
+MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))
+MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
+
+def send_email_async(to_email, subject, body):
+    if not MAIL_USERNAME or not MAIL_PASSWORD:
+        logger.warning("Email credentials missing. Email not sent.")
+        return
+
+    def send():
+        try:
+            msg = EmailMessage()
+            msg['Subject'] = subject
+            msg['From'] = MAIL_DEFAULT_SENDER
+            msg['To'] = to_email
+            msg.set_content(body)
+
+            with smtplib.SMTP(MAIL_SERVER, MAIL_PORT) as server:
+                server.starttls()
+                server.login(MAIL_USERNAME, MAIL_PASSWORD)
+                server.send_message(msg)
+            logger.info(f"Email sent successfully to {to_email}")
+        except Exception as e:
+            logger.error(f"Failed to send email to {to_email}: {e}")
+
+    # Process in the background so the website doesn't freeze
+    thread = threading.Thread(target=send)
+    thread.start()
 
 # ==========================================
 # MIDDLEWARE & HELPERS
@@ -305,6 +342,14 @@ def contact():
     finally:
         if conn: db_pool.putconn(conn)
     
+    # Notify Admin
+    admin_body = f"New Inquiry from {name} ({email}):\n\n{message}"
+    send_email_async(MAIL_DEFAULT_SENDER, f"NEW LEAD: {name}", admin_body)
+    
+    # Auto-reply to User
+    user_body = f"Hi {name},\n\nWe received your message and will be in touch shortly.\n\nYour Message:\n{message}"
+    send_email_async(email, "We received your inquiry", user_body)
+
     flash("Inquiry sent successfully. The Dragon HMS team will be in touch shortly.", "success")
     return redirect(url_for('home'))
 
@@ -348,6 +393,10 @@ def register():
                 conn.commit()
                 log_action(user_id, "user_registered")
                 logger.info(f"New user registered: {email}")
+                
+                welcome_body = f"Welcome to The Dragon HMS!\n\nYour account for {email} has been securely created. You can now log into your portal."
+                send_email_async(email, "Welcome to The Dragon HMS", welcome_body)
+                
                 flash("Account created! Log in below to access your client dashboard.", "success")
                 return redirect(url_for('login'))
             except psycopg2.IntegrityError:
