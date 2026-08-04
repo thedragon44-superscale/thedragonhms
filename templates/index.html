@@ -125,28 +125,11 @@
             
             .nav-links .btn { padding: 6px 12px; font-size: 0.85rem; }
 
-            /* Compact Floating Buttons - Stacked cleanly on the right */
-            .ui-switcher-btn {
-                bottom: 105px !important; 
-                left: auto !important;
-                right: 15px !important;
-                width: auto !important;
-                padding: 8px 16px !important;
-                font-size: 0.8rem !important;
+            /* Compact Floating Stack for Mobile */
+            .floating-action-stack {
+                top: 80px; right: 15px; gap: 8px;
             }
-            .special-feature-btn {
-                bottom: 60px !important; 
-                left: auto !important;
-                right: 15px !important;
-                width: auto !important;
-                padding: 8px 16px !important;
-                font-size: 0.8rem !important;
-            }
-            .contact-floating-btn {
-                bottom: 15px !important;
-                left: auto !important;
-                right: 15px !important;
-                width: auto !important;
+            .floating-action-stack button {
                 padding: 8px 16px !important;
                 font-size: 0.8rem !important;
             }
@@ -195,20 +178,29 @@
         .dns-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
         .dns-value { font-size: 1.1rem; color: var(--text-main); font-weight: 600; word-break: break-all; }
         
-        /* Special Feature Floating Buttons */
+        /* Floating Action Stack (Top Right) */
+        .floating-action-stack {
+            position: fixed; top: 100px; right: 30px;
+            display: flex; flex-direction: column; gap: 12px;
+            z-index: 1000; align-items: flex-end;
+        }
+
+        /* Strip individual fixed positioning so they stack neatly */
+        .floating-action-stack button {
+            position: relative !important; top: auto !important; bottom: auto !important; 
+            left: auto !important; right: auto !important; margin: 0 !important;
+        }
+
         .special-feature-btn {
-            position: fixed; bottom: 80px; right: 30px;
-            padding: 12px 24px; border-radius: var(--radius-full);
-            font-size: 0.9rem; font-weight: bold; cursor: pointer; z-index: 1000;
+            padding: 10px 20px; border-radius: var(--radius-full);
+            font-size: 0.9rem; font-weight: bold; cursor: pointer;
             transition: all 0.3s ease; display: none; /* Invisible on Default Theme */
         }
 
-        /* Reach Out Floating Button */
         .contact-floating-btn {
-            position: fixed; bottom: 30px; right: 30px;
             background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-dark) 100%);
-            color: #ffffff; padding: 12px 24px; border-radius: var(--radius-full); border: none;
-            font-size: 0.9rem; font-weight: bold; cursor: pointer; z-index: 1000;
+            color: #ffffff; padding: 10px 20px; border-radius: var(--radius-full); border: none;
+            font-size: 0.9rem; font-weight: bold; cursor: pointer;
             box-shadow: 0 5px 15px rgba(217, 119, 54, 0.4); transition: all 0.3s ease;
         }
         .contact-floating-btn:hover { 
@@ -259,6 +251,7 @@
         <div class="hero-actions">
             <button onclick="openModal('wizard-modal')" class="btn btn-blue">Scope Your Project</button>
             <button onclick="openModal('tech-stack-modal')" class="btn btn-orange-outline">View Our Tech Stack</button>
+            <button onclick="openContactModal()" class="btn btn-primary">💬 Reach Out</button>
         </div>
     </header>
 
@@ -443,9 +436,12 @@
         </div>
     </div>
 
-    <!-- UI Theme Switcher Button -->
-    <button class="ui-switcher-btn" onclick="openUiModal()">✨ Capabilities Showcase</button>
-    <button onclick="openContactModal()" class="contact-floating-btn">💬 Reach Out</button>
+    <!-- Floating Action Stack -->
+    <div class="floating-action-stack">
+        <button class="ui-switcher-btn" onclick="openUiModal()">✨ Capabilities Showcase</button>
+        <button onclick="openDnsModal()" class="special-feature-btn btn-dns">▶ Fingerprint Audit</button>
+        <button onclick="openCsvModal()" class="special-feature-btn btn-csv">📊 POS Ledger Analyzer</button>
+    </div>
 
     <!-- Reach Out Modal -->
     <div id="contact-modal" class="modal-overlay" onclick="closeContactModal(event)" style="z-index: 3600;">
@@ -505,9 +501,7 @@
         </div>
     </div>
 
-    <!-- Floating Special Feature Triggers -->
-    <button onclick="openDnsModal()" class="special-feature-btn btn-dns">▶ Fingerprint Audit</button>
-    <button onclick="openCsvModal()" class="special-feature-btn btn-csv">📊 POS Ledger Analyzer</button>
+    
 
     <!-- CSV POS Ledger Analyzer Modal -->
     <div id="csv-modal" class="modal-overlay" onclick="closeCsvModal(event)" style="z-index: 3500;">
@@ -613,15 +607,22 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
         // --- MODAL LOGIC ---
+        function toggleFloaters(show) {
+            const stack = document.querySelector('.floating-action-stack');
+            if (stack) stack.style.display = show ? 'flex' : 'none';
+        }
+
         function openModal(modalId) {
             document.getElementById(modalId).style.display = 'flex';
             document.body.style.overflow = 'hidden'; 
+            toggleFloaters(false);
         }
         
         function closeModal(e, modalId) {
             if (!e || e.target.id === modalId) {
                 document.getElementById(modalId).style.display = 'none';
                 document.body.style.overflow = 'auto';
+                toggleFloaters(true);
             }
         }
 
@@ -629,24 +630,27 @@
         function openUiModal() { 
             document.getElementById('ui-modal').style.display = 'flex'; 
             document.body.style.overflow = 'hidden';
+            toggleFloaters(false);
         }
         function closeUiModal(e) {
             if (!e || e.target.id === 'ui-modal' || e.target.classList.contains('modal-close')) {
                 document.getElementById('ui-modal').style.display = 'none';
                 document.body.style.overflow = 'auto';
+                toggleFloaters(true);
             }
         }
 
         function openContactModal() {
-            closeUiModal();
             document.getElementById('contact-modal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
+            toggleFloaters(false);
         }
         
         function closeContactModal(e) {
             if (!e || e.target.id === 'contact-modal' || e.target.classList.contains('modal-close')) {
                 document.getElementById('contact-modal').style.display = 'none';
                 document.body.style.overflow = 'auto';
+                toggleFloaters(true);
             }
         }
         
@@ -662,12 +666,16 @@
         function openDnsModal() {
             closeUiModal();
             document.getElementById('dns-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            toggleFloaters(false);
         }
         function closeDnsModal(e) {
             if (!e || e.target.id === 'dns-modal' || e.target.classList.contains('modal-close')) {
                 document.getElementById('dns-modal').style.display = 'none';
                 document.getElementById('dns-results').style.display = 'none';
                 document.getElementById('btn-run-dns').innerText = "Execute Leak Test";
+                document.body.style.overflow = 'auto';
+                toggleFloaters(true);
             }
         }
 
@@ -723,10 +731,14 @@
         function openCsvModal() {
             closeUiModal();
             document.getElementById('csv-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            toggleFloaters(false);
         }
         function closeCsvModal(e) {
             if (!e || e.target.id === 'csv-modal' || e.target.classList.contains('modal-close')) {
                 document.getElementById('csv-modal').style.display = 'none';
+                document.body.style.overflow = 'auto';
+                toggleFloaters(true);
             }
         }
 
