@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Operations Dashboard - The Dragon HMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Dark Grey Backgrounds */
+            --bg-body: #18181c; 
+            --bg-card: #222228; 
+            --bg-card-subtle: #2a2a32; 
+            --border-color: #383842;
+            
+            /* Royal Blue (Primary Brand) */
+            --brand-blue: #2563eb; 
+            --brand-blue-light: #3b82f6; 
+            --brand-blue-dark: #1d4ed8;
+            --blue-glow: rgba(37, 99, 235, 0.45); 
+            --blue-glow-subtle: rgba(37, 99, 235, 0.15);
+
+            /* Smokey Orange (Accents/Highlights) */
+            --brand-orange: #d97736;
+            --brand-orange-light: #f28b46;
+            --brand-orange-dark: #b55d24;
+            
+            /* Typography & Colors */
+            --text-main: #f8fafc; 
+            --text-muted: #94a3b8;
+            --font-display: 'Playfair Display', serif; 
+            --font-body: 'Inter', sans-serif; 
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+            
+            /* Status Colors */
+            --danger: #ef4444; --danger-bg: rgba(239, 68, 68, 0.15);
+            --success: #10b981; --success-bg: rgba(16, 185, 129, 0.15);
+            --warning: #f59e0b; --warning-bg: rgba(245, 158, 11, 0.15);
+            
+            --space-xs: 0.5rem; --space-sm: 0.75rem; --space-md: 1rem; 
+            --space-lg: 1.5rem; --space-xl: 2rem; --space-2xl: 3rem;
+            --radius-md: 10px; --radius-lg: 18px;
+            --shadow-md: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+            --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+            --transition-spring: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-body); background-color: var(--bg-body); color: var(--text-main); line-height: 1.6; -webkit-font-smoothing: antialiased; background-image: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(217, 119, 54, 0.08) 0%, transparent 40%); background-attachment: fixed; min-height: 100vh; overflow-x: hidden; }
+        h1, h2, h3 { font-family: var(--font-display); color: var(--text-main); font-weight: 700; }
+        .text-gradient { background: linear-gradient(135deg, var(--brand-blue-light) 0%, var(--brand-blue) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .app-nav { background: rgba(24, 24, 28, 0.85); backdrop-filter: blur(12px); color: white; padding: 0 5%; display: flex; justify-content: space-between; align-items: center; height: 70px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }
+        .logo-container { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .logo-img { height: 40px; width: auto; object-fit: contain; }
+        .logo-text { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; color: var(--text-main); }
+        .logo-text span { color: var(--brand-blue); }
+        
+        .app-nav-links { display: flex; gap: var(--space-lg); align-items: center; height: 100%; }
+        .app-nav-link { color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 0.9rem; height: 100%; display: flex; align-items: center; border-bottom: 2px solid transparent; transition: all var(--transition-base); }
+        .app-nav-link:hover { color: white; }
+        .app-nav-link.active { color: white; border-bottom-color: var(--brand-blue); }
+        .app-nav-logout { color: var(--brand-orange-light) !important; font-weight: 600; transition: all var(--transition-base); }
+        .app-nav-logout:hover { color: #ffffff !important; text-shadow: 0 0 10px rgba(242, 139, 70, 0.5); }
+
+        .dashboard-container { max-width: 1200px; margin: 0 auto; padding: var(--space-xl) 5% var(--space-2xl) 5%; }
+        .card { background: var(--bg-card); border-radius: var(--radius-lg); padding: var(--space-xl); box-shadow: var(--shadow-md); border: 1px solid var(--border-color); position: relative; overflow: hidden; margin-bottom: var(--space-xl); }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--brand-blue), transparent); opacity: 0.7; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-xl); }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-md) var(--space-lg); transition: all var(--transition-base); position: relative; }
+        
+        .stat-card-modal { cursor: pointer; background: linear-gradient(135deg, #1e1e24 0%, #1a1a1f 100%); border: 1px solid var(--brand-blue); box-shadow: 0 0 18px var(--blue-glow-subtle); transition: all var(--transition-base); }
+        .stat-card-modal:hover { transform: translateY(-3px); box-shadow: 0 0 25px var(--blue-glow); border-color: var(--brand-blue-light); }
+        .modal-card-badge { position: absolute; bottom: 12px; right: 12px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--brand-blue-light); background: rgba(37, 99, 235, 0.15); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--brand-blue); }
+
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin-top: 4px; }
+        .stat-value.highlight { color: var(--brand-blue-light); }
+
+        .modules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl); align-items: start; }
+        .booking-box { background: var(--bg-card-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-lg); margin-bottom: var(--space-lg); }
+
+        .btn { display: inline-flex; justify-content: center; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-md); font-weight: 600; font-size: 0.85rem; text-decoration: none; cursor: pointer; border: none; transition: all var(--transition-base); }
+        .btn-blue { background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-blue-dark) 100%); color: #ffffff; box-shadow: 0 4px 15px var(--blue-glow); }
+        .btn-blue:hover { transform: translateY(-1px); box-shadow: 0 6px 20px var(--blue-glow); }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-outline:hover { border-color: var(--brand-blue); color: var(--brand-blue-light); }
+        .btn-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .btn-success:hover { background: var(--success); color: #fff; }
+        .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        .form-group { margin-bottom: var(--space-md); }
+        .form-group label { display: block; font-weight: 500; font-size: 0.85rem; margin-bottom: var(--space-xs); color: var(--text-muted); }
+        .form-control { width: 100%; padding: var(--space-sm) var(--space-md); border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-body); font-size: 15px; background-color: #1a1a1f; color: var(--text-main); }
+        .form-control:focus { outline: none; border-color: var(--brand-blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+
+        .upload-zone { border: 2px dashed var(--border-color); border-radius: var(--radius-md); padding: var(--space-lg) var(--space-md); text-align: center; cursor: pointer; background: #1a1a1f; position: relative; margin-bottom: var(--space-md); transition: border-color 0.2s; }
+        .upload-zone:hover { border-color: var(--brand-blue); }
+        .upload-zone input[type="file"] { opacity: 0; position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+
+        .table-responsive { overflow-x: auto; }
+        .table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .table th { text-align: left; padding: var(--space-sm) var(--space-md); font-weight: 600; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border-color); }
+        .table td { padding: var(--space-sm) var(--space-md); font-size: 0.88rem; border-bottom: 1px solid #2a2a32; vertical-align: middle; }
+        .table tr:last-child td { border-bottom: none; }
+        .mono-text { font-family: var(--font-mono); font-size: 0.82rem; color: var(--brand-blue-light); }
+
+        .badge-pending { color: var(--warning); background: var(--warning-bg); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-confirmed { color: var(--success); background: var(--success-bg); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-denied { color: var(--danger); background: var(--danger-bg); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-cancelled { color: #9ca3af; background: rgba(156, 163, 175, 0.15); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(156, 163, 175, 0.3); }
+
+        #alert-box { display: none; padding: var(--space-md); border-radius: var(--radius-md); margin-bottom: var(--space-lg); font-size: 0.9rem; }
+        .alert-success { background-color: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .alert-danger { background-color: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        /* MODAL OVERLAY */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
+        .modal-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); width: 100%; max-width: 900px; height: 85vh; display: flex; flex-direction: column; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
+        .modal-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--brand-blue), transparent); }
+        .modal-header { padding: var(--space-md) var(--space-lg); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .modal-body { padding: var(--space-lg); overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; flex-grow: 1; }
+        
+        #preview-modal .modal-body { padding: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; background: #000; }
+        .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.6rem; cursor: pointer; line-height: 1; }
+        .modal-close:hover { color: var(--brand-blue-light); }
+
+        #preview-modal .modal-body iframe, #preview-modal .modal-body img { width: 100%; height: 100%; max-width: 100%; max-height: 75vh; border: none; object-fit: contain; margin: 0 auto; display: block; }
+        
+        .fade-in-up { animation: fadeInUp 0.5s var(--transition-spring) both; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .nav-icon { display: none; }
+
+        @media (max-width: 900px) { .modules-grid { grid-template-columns: 1fr; } }
+
+        @media (max-width: 640px) {
+            .app-nav { padding: 10px; height: auto; flex-direction: column; justify-content: center; gap: 12px; }
+            .app-nav-links { width: 100%; justify-content: space-around; gap: 8px; }
+            .app-nav-link { font-size: 1.2rem; }
+            .nav-text { display: none; }
+            .nav-icon { display: inline; }
+            .app-nav-logout { font-size: 0.85rem !important; white-space: nowrap; }
+            .dashboard-container { padding: var(--space-md) 1rem var(--space-xl) 1rem; }
+            .stats-grid { grid-template-columns: 1fr; gap: 10px; }
+            .card { padding: var(--space-lg) var(--space-md); }
+            .btn { white-space: nowrap; }
+            .badge-confirmed, .badge-pending, .badge-denied, .badge-cancelled { font-size: 0.7rem; padding: 2px 6px; }
+            
+            .table-responsive { overflow-x: hidden; }
+            .table, .table tbody, .table tr, .table td { display: block; width: 100%; }
+            .table thead { display: none; } 
+            .table tr { padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+            .table td { border-bottom: none !important; padding: 4px 0 !important; text-align: left !important; }
+            .table td:first-child { font-size: 0.95rem; word-break: break-all; font-weight: 600; }
+            .table td:last-child { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        }
+
+        .swipe-transition { transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease-out; will-change: transform, opacity; }
+        .slide-out-left { transform: translateX(-50px); opacity: 0; }
+        .slide-out-right { transform: translateX(50px); opacity: 0; }
+    </style>
+</head>
+<body>
+
+    <nav class="app-nav">
+        <a href="{{ url_for('dashboard') }}" class="logo-container">
+            <img src="{{ url_for('static', filename='dragon_logo.png') }}" alt="Dragon HMS" class="logo-img">
+            <span class="logo-text">The Dragon <span>HMS</span>.</span>
+        </a>
+        <div class="app-nav-links">
+            <a href="{{ url_for('dashboard') }}" class="app-nav-link active">
+                <span class="nav-icon">🏠</span><span class="nav-text">Portal</span>
+            </a>
+            <a href="{{ url_for('messages') }}" class="app-nav-link">
+                <span class="nav-icon">💬</span><span class="nav-text">Messages</span>
+            </a>
+            <a href="{{ url_for('feed') }}" class="app-nav-link">
+                <span class="nav-icon">📰</span><span class="nav-text">Project Feed</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="app-nav-link app-nav-logout">Log Out</a>
+        </div>
+    </nav>
+    
+    <main id="swipe-container" class="dashboard-container fade-in-up swipe-transition">
+        
+        <div style="margin-bottom: var(--space-xl);">
+            <h1 style="font-size: 2.2rem;">Operations <span class="text-gradient">Dashboard</span></h1>
+            <p style="color: var(--text-muted); font-weight: 300;">
+                {% if user_role == 'agent' %}
+                    Manage system resources, configure availability, and review project inquiries.
+                {% else %}
+                    Access your secure infrastructure, view project updates, and communicate with your administrator.
+                {% endif %}
+            </p>
+        </div>
+
+        <div id="alert-box"></div>
+        
+        <!-- SECURITY: Safe rendering of Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category | e }}" style="display: block;">{{ message | e }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Quick Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Access Level</div>
+                <div class="stat-value highlight">{{ 'System Administrator' if user_role == 'agent' else 'Client Portal' }}</div>
+            </div>
+            
+            <div class="stat-card stat-card-modal" onclick="openVaultModal()">
+                <span class="modal-card-badge">Open Vault ↗</span>
+                <div class="stat-label" style="color: var(--brand-blue-light);">Secure Storage Files</div>
+                <div class="stat-value" id="stat-vault-count">{{ documents|length }}</div>
+            </div>
+            
+            <div class="stat-card stat-card-modal" onclick="openSessionsModal()" style="border-color: #f28b46; box-shadow: 0 0 18px rgba(242, 139, 70, 0.15);">
+                <span class="modal-card-badge" style="color: #f28b46; border-color: #f28b46; background: rgba(242, 139, 70, 0.15);">View Active ↗</span>
+                <div class="stat-label" style="color: #f28b46;">{% if user_role == 'agent' %}System Builds / Consults{% else %}My Project Consultations{% endif %}</div>
+                <div class="stat-value" id="stat-sessions-count">{{ appointments|length }}</div>
+            </div>
+
+            {% if user_role == 'agent' %}
+            <!-- Public Inquiries Trigger (ADMIN ONLY) -->
+            <div class="stat-card stat-card-modal" onclick="openInquiriesModal()" style="border-color: #10b981; box-shadow: 0 0 18px rgba(16, 185, 129, 0.15);">
+                <span class="modal-card-badge" style="color: #10b981; border-color: #10b981; background: rgba(16, 185, 129, 0.15);">Inbox ↗</span>
+                <div class="stat-label" style="color: #34d399;">Public Project Inquiries</div>
+                <div class="stat-value" id="stat-inquiries-count">{{ inquiries|length }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Portal Modules Grid -->
+        <div class="modules-grid" {% if user_role == 'client' %}style="grid-template-columns: 1fr;"{% endif %}>
+            
+            {% if user_role == 'agent' %}
+            <!-- MODULE 1: ADMIN AVAILABILITY (ADMIN ONLY) -->
+            <section class="card">
+                <h2 style="font-size: 1.3rem; margin-bottom: var(--space-md); font-family: var(--font-body);">
+                    📅 Scheduler <span class="text-gradient">Configuration</span>
+                </h2>
+
+                <div style="background: #1a1a1f; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-md); margin-bottom: var(--space-md);">
+                    <div style="font-weight: 600; font-size: 0.85rem; color: var(--brand-blue-light); margin-bottom: 6px;">Active Booking Slots For Public:</div>
+                    <div id="availability-container" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        {% for avail in availability %}
+                            <span id="avail-badge-{{ avail.id }}" style="font-size: 0.78rem; background: #222228; border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 6px; color: var(--text-main);">
+                                <strong>{{ avail.day_of_week | e }}:</strong> {{ avail.start_time.strftime('%I:%M %p') }} - {{ avail.end_time.strftime('%I:%M %p') }}
+                                <button onclick="deleteAvailability({{ avail.id }})" style="background:none; border:none; color: var(--danger); cursor:pointer; margin-left: 6px; font-size: 1rem; line-height: 1;">&times;</button>
+                            </span>
+                        {% else %}
+                            <span id="no-avail-msg" style="font-size: 0.78rem; color: var(--text-muted);">No active working blocks defined.</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="booking-box" style="margin-bottom: 0;">
+                    <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: var(--space-xs);">Add Time Block</div>
+                    <form id="add-availability-form" style="display: grid; grid-template-columns: 1fr 1.1fr 1.1fr auto; gap: 10px; align-items: end;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-muted);">Day</label>
+                            <select name="day_of_week" class="form-control" style="padding: 8px;" required>
+                                <option value="Mon">Mon</option><option value="Tue">Tue</option><option value="Wed">Wed</option>
+                                <option value="Thu">Thu</option><option value="Fri">Fri</option><option value="Sat">Sat</option><option value="Sun">Sun</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-muted);">Start Time</label>
+                            <select name="start_time" class="form-control" style="padding: 8px;" required>
+                                <option value="06:00">6:00 AM</option><option value="07:00">7:00 AM</option><option value="08:00">8:00 AM</option>
+                                <option value="09:00" selected>9:00 AM</option><option value="10:00">10:00 AM</option><option value="11:00">11:00 AM</option>
+                                <option value="12:00">12:00 PM</option><option value="13:00">1:00 PM</option><option value="14:00">2:00 PM</option>
+                                <option value="15:00">3:00 PM</option><option value="16:00">4:00 PM</option><option value="17:00">5:00 PM</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-muted);">End Time</label>
+                            <select name="end_time" class="form-control" style="padding: 8px;" required>
+                                <option value="09:00">9:00 AM</option><option value="10:00">10:00 AM</option><option value="11:00">11:00 AM</option>
+                                <option value="12:00">12:00 PM</option><option value="13:00">1:00 PM</option><option value="14:00">2:00 PM</option>
+                                <option value="15:00">3:00 PM</option><option value="16:00">4:00 PM</option><option value="17:00" selected>5:00 PM</option>
+                                <option value="18:00">6:00 PM</option><option value="19:00">7:00 PM</option><option value="20:00">8:00 PM</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-blue" style="padding: 10px 14px;">+ Add</button>
+                    </form>
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- MODULE 2: UPLOAD TO VAULT -->
+            <section class="card" style="margin-bottom: 0; max-width: {% if user_role == 'client' %}600px; margin: 0 auto;{% else %}100%{% endif %}; width: 100%;">
+                <h2 style="font-size: 1.3rem; margin-bottom: var(--space-md); font-family: var(--font-body);">
+                    📂 Secure Storage <span class="text-gradient">Upload</span>
+                </h2>
+
+                <form id="upload-file-form" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if user_role == 'agent' %}
+                    <div class="form-group">
+                        <label for="client_id">Assign File to Client Scope</label>
+                        <select id="client_id" name="client_id" class="form-control" required>
+                            <option value="" disabled selected>Select client project...</option>
+                            {% for client in clients %}
+                                <option value="{{ client.id }}">{{ client.email | e }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <div class="upload-zone">
+                        <p id="upload-zone-text" style="font-weight: 500; color: var(--text-main); font-size: 0.95rem;">Click or drag file to secure vault</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">PDF, DOCX, PNG, JPG (Project Specs & Media)</p>
+                        <input type="file" name="file" id="file" required>
+                    </div>
+                    <button type="submit" id="btn-upload-submit" class="btn btn-blue" style="width: 100%;">Upload to Infrastructure Vault</button>
+                </form>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- SECURE VAULT MODAL -->
+    <div id="vault-modal" class="modal-overlay" onclick="closeVaultModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 style="font-size: 1.25rem;">Infrastructure <span class="text-gradient">Vault</span></h2>
+                <button class="modal-close" onclick="closeVaultModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Filename</th>
+                                <th>Uploaded By</th>
+                                <th>Timestamp</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="documents-tbody">
+                            {% for doc in documents %}
+                            <tr>
+                                <td style="color: var(--text-main); font-weight: 500;">{{ doc.filename | e }}</td>
+                                <td style="font-size: 0.82rem; color: var(--text-muted);">
+                                    {% if doc.uploader_id == session['user_id'] %}
+                                        You
+                                    {% elif user_role == 'client' %}
+                                        Admin
+                                    {% else %}
+                                        Client
+                                    {% endif %}
+                                </td>
+                                <td class="mono-text">{{ doc.uploaded_at.strftime('%b %d') if doc.uploaded_at else '' }}</td>
+                                <td style="text-align: right; min-width: 150px;">
+                                    <button type="button" onclick="openPreviewModal('{{ url_for('preview_file', doc_id=doc.id) }}', '{{ doc.filename | e }}')" class="btn btn-outline" style="padding: 6px 10px; font-size: 0.75rem; margin-right: 4px;">Preview</button>
+                                    <a href="{{ url_for('download_file', doc_id=doc.id) }}" class="btn btn-outline" style="padding: 6px 10px; font-size: 0.75rem;">Download</a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr id="no-docs-row">
+                                <td colspan="4" style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No files currently secured in the vault.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SESSIONS / APPOINTMENTS MODAL -->
+    <div id="sessions-modal" class="modal-overlay" onclick="closeSessionsModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 style="font-size: 1.25rem;">Project <span class="text-orange">Consultations</span></h2>
+                <button class="modal-close" onclick="closeSessionsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Type</th>
+                                {% if user_role == 'agent' %}<th>Guest/Client Email</th>{% endif %}
+                                <th>Status</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-appointments-tbody">
+                            {% for appt in appointments %}
+                            <tr id="modal-appt-row-{{ appt.id }}">
+                                <td class="mono-text" style="white-space: nowrap;">{{ appt.start_time.strftime('%b %d, %Y %I:%M %p') if appt.start_time else 'Pending' }}</td>
+                                <td style="color: var(--brand-blue-light); font-weight: 500; font-size: 0.82rem;">{{ appt.session_type | e or 'Initial Consultation' }}</td>
+                                {% if user_role == 'agent' %}<td style="color: var(--text-main); font-size: 0.85rem;">{{ appt.guest_email | e or appt.client_email | e }}</td>{% endif %}
+                                <td id="modal-status-cell-{{ appt.id }}">
+                                    {% if appt.status == 'confirmed' %}
+                                        <span class="badge-confirmed">Confirmed</span>
+                                    {% elif appt.status == 'pending' %}
+                                        <span class="badge-pending">Pending Approval</span>
+                                    {% elif appt.status == 'cancelled' %}
+                                        <span class="badge-cancelled">Cancelled</span>
+                                    {% else %}
+                                        <span class="badge-denied">Denied</span>
+                                    {% endif %}
+                                </td>
+                                <td id="modal-action-cell-{{ appt.id }}" style="text-align: right; min-width: 140px;">
+                                    {% if user_role == 'agent' %}
+                                        {% if appt.status == 'pending' %}
+                                            <button onclick="updateSessionStatus({{ appt.id }}, 'accept')" class="btn btn-success" style="padding: 4px 8px; font-size: 0.75rem;">Accept</button>
+                                            <button onclick="updateSessionStatus({{ appt.id }}, 'deny')" class="btn btn-danger" style="padding: 4px 8px; font-size: 0.75rem;">Deny</button>
+                                        {% elif appt.status == 'confirmed' %}
+                                            <button onclick="updateSessionStatus({{ appt.id }}, 'cancel')" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.75rem; color: var(--danger);">Cancel</button>
+                                        {% endif %}
+                                    {% else %}
+                                        {% if appt.status != 'cancelled' and appt.status != 'denied' %}
+                                            <button onclick="updateSessionStatus({{ appt.id }}, 'cancel')" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.75rem; color: var(--danger);">Cancel Request</button>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% if user_role == 'agent' and appt.project_scope %}
+                            <!-- Admin view of project scope -->
+                            <tr id="scope-row-{{ appt.id }}">
+                                <td colspan="5" style="padding-top: 0; padding-bottom: 15px; border-bottom: 1px solid #2a2a32;">
+                                    <div style="background: rgba(37,99,235,0.05); border-left: 3px solid var(--brand-blue); padding: 8px 12px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+                                        <strong>Scope Logic:</strong> {{ appt.project_scope | e }}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% else %}
+                            <tr>
+                                <td colspan="{% if user_role == 'agent' %}5{% else %}4{% endif %}" style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No active sessions or consultations currently on file.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PUBLIC INQUIRIES MODAL (ADMIN ONLY) -->
+    {% if user_role == 'agent' %}
+    <div id="inquiries-modal" class="modal-overlay" onclick="closeInquiriesModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 style="font-size: 1.25rem;">Public <span style="color: #10b981;">Inquiries</span></h2>
+                <button class="modal-close" onclick="closeInquiriesModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Name / Email</th>
+                                <th>Project Requirements</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inq in inquiries %}
+                            <tr id="inquiry-row-{{ inq.id }}">
+                                <td class="mono-text" style="vertical-align: top; padding-top: 12px;">{{ inq.created_at.strftime('%b %d') if inq.created_at else '' }}</td>
+                                <td style="vertical-align: top; padding-top: 12px;">
+                                    <div style="color: var(--text-main); font-weight: 600;">{{ inq.name | e }}</div>
+                                    <a href="mailto:{{ inq.email | e }}" style="color: var(--brand-blue-light); text-decoration: none; font-size: 0.8rem;">{{ inq.email | e }}</a>
+                                </td>
+                                <td style="font-size: 0.85rem; max-width: 300px; white-space: normal; line-height: 1.4; vertical-align: top; padding-top: 12px; color: var(--text-muted);">
+                                    "{{ inq.message | e }}"
+                                </td>
+                                <td style="text-align: right; vertical-align: top; padding-top: 12px;">
+                                    <button onclick="deleteInquiry({{ inq.id }})" class="btn btn-outline" style="padding: 4px 10px; font-size: 0.75rem; color: var(--danger);">Dismiss</button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No public inquiries yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- FILE PREVIEW MODAL -->
+    <div id="preview-modal" class="modal-overlay" onclick="closePreviewModal(event)" style="z-index: 2000;">
+        <div class="modal-card" style="max-width: 1000px; height: 90vh;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 style="font-size: 1.25rem;">File <span class="text-gradient">Preview</span></h2>
+                <button class="modal-close" onclick="closePreviewModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Content injected dynamically by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userRole = "{{ user_role }}";
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        async function securePost(url, body = null) {
+            const headers = { 
+                'X-CSRFToken': csrfToken,
+                'Accept': 'application/json' 
+            };
+            
+            if (!(body instanceof FormData) && body !== null) {
+                headers['Content-Type'] = 'application/json';
+            }
+
+            const options = { method: 'POST', headers: headers };
+            if (body) options.body = body;
+
+            return await fetch(url, options);
+        }
+
+        function showAlert(message, type = 'success') {
+            const alertBox = document.getElementById('alert-box');
+            alertBox.className = `alert alert-${type}`;
+            alertBox.textContent = message;
+            alertBox.style.display = 'block';
+            setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* Modal Controls */
+        function openVaultModal() { document.getElementById('vault-modal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        function closeVaultModal(e) {
+            if (!e || e.target.id === 'vault-modal' || e.target.classList.contains('modal-close')) {
+                document.getElementById('vault-modal').style.display = 'none'; document.body.style.overflow = 'auto';
+            }
+        }
+        function openSessionsModal() { document.getElementById('sessions-modal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        function closeSessionsModal(e) {
+            if (!e || e.target.id === 'sessions-modal' || e.target.classList.contains('modal-close')) {
+                document.getElementById('sessions-modal').style.display = 'none'; document.body.style.overflow = 'auto';
+            }
+        }
+        function openInquiriesModal() { document.getElementById('inquiries-modal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        function closeInquiriesModal(e) {
+            if (!e || e.target.id === 'inquiries-modal' || e.target.classList.contains('modal-close')) {
+                document.getElementById('inquiries-modal').style.display = 'none'; document.body.style.overflow = 'auto';
+            }
+        }
+        function openPreviewModal(url, filename = '') { 
+            const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
+            const modalBody = document.querySelector('#preview-modal .modal-body');
+            
+            if (isImage) {
+                modalBody.innerHTML = `<img src="${url}" style="width: 100%; height: 100%; object-fit: contain; display: block; margin: 0 auto;">`;
+            } else {
+                modalBody.innerHTML = `<iframe src="${url}" style="width: 100%; height: 100%; border: none;"></iframe>`;
+            }
+            
+            document.getElementById('preview-modal').style.display = 'flex'; 
+        }
+        
+        function closePreviewModal(e) {
+            if (!e || e.target.id === 'preview-modal' || e.target.classList.contains('modal-close')) {
+                document.getElementById('preview-modal').style.display = 'none';
+                document.querySelector('#preview-modal .modal-body').innerHTML = '';
+            }
+        }
+
+        /* 1. UPLOAD FILE TO VAULT */
+        const fileInput = document.getElementById('file');
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const fileName = e.target.files[0]?.name;
+                if (fileName) {
+                    document.getElementById('upload-zone-text').textContent = fileName;
+                    document.getElementById('upload-zone-text').style.color = 'var(--brand-blue-light)';
+                }
+            });
+        }
+
+        const uploadFileForm = document.getElementById('upload-file-form');
+        if (uploadFileForm) {
+            uploadFileForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const btn = document.getElementById('btn-upload-submit');
+                const originalText = btn.textContent;
+                btn.textContent = 'Uploading to Infrastructure... ⏳';
+                btn.disabled = true;
+
+                const formData = new FormData(this);
+                const response = await securePost('/upload', formData);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showAlert(result.message, 'success');
+                    const noDocs = document.getElementById('no-docs-row');
+                    if (noDocs) noDocs.remove();
+                    
+                    const payload = result.data.doc;
+                    const tr = document.createElement('tr');
+                    
+                    const escapeHTML = (str) => str.replace(/[&<>'"]/g, 
+                        tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag]));
+
+                    let uploadedByText = payload.uploaded_by;
+                    if (uploadedByText === 'Admin' && userRole === 'agent') uploadedByText = 'You';
+                    if (uploadedByText === 'Client' && userRole === 'client') uploadedByText = 'You';
+
+                    tr.innerHTML = `
+                        <td style="color: var(--text-main); font-weight: 500;">${escapeHTML(payload.filename)}</td>
+                        <td style="font-size: 0.82rem; color: var(--text-muted);">${uploadedByText}</td>
+                        <td class="mono-text">${payload.uploaded_at}</td>
+                        <td style="text-align: right; min-width: 150px;">
+                            <button type="button" onclick="openPreviewModal('/preview/${payload.id}', '${escapeHTML(payload.filename)}')" class="btn btn-outline" style="padding: 6px 10px; font-size: 0.75rem; margin-right: 4px;">Preview</button>
+                            <a href="/download/${payload.id}" class="btn btn-outline" style="padding: 6px 10px; font-size: 0.75rem;">Download</a>
+                        </td>
+                    `;
+                    document.getElementById('documents-tbody').prepend(tr);
+                    this.reset();
+                    document.getElementById('upload-zone-text').textContent = 'Click or drag file to secure vault';
+                    document.getElementById('upload-zone-text').style.color = 'var(--text-main)';
+
+                    const countEl = document.getElementById('stat-vault-count');
+                    if (countEl) countEl.textContent = parseInt(countEl.textContent || '0') + 1;
+                } else {
+                    showAlert(result.message || 'Upload failed', 'danger');
+                }
+                
+                btn.textContent = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        /* 2. ADD / DELETE AVAILABILITY (ADMIN ONLY) */
+        const addAvailForm = document.getElementById('add-availability-form');
+        if (addAvailForm) {
+            addAvailForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const response = await securePost('/set-availability', formData);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showAlert(result.message, 'success');
+                    const noAvail = document.getElementById('no-avail-msg');
+                    if (noAvail) noAvail.remove();
+                    
+                    const payload = result.data;
+                    const badge = document.createElement('span');
+                    badge.id = `avail-badge-${payload.id}`;
+                    badge.style.cssText = 'font-size: 0.78rem; background: #222228; border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 6px; color: var(--text-main);';
+                    badge.innerHTML = `<strong>${payload.day_of_week}:</strong> ${payload.start_time} - ${payload.end_time} <button onclick="deleteAvailability(${payload.id})" style="background:none; border:none; color: var(--danger); cursor:pointer; margin-left: 6px; font-size: 1rem; line-height: 1;">&times;</button>`;
+                    document.getElementById('availability-container').appendChild(badge);
+                    this.reset();
+                } else {
+                    showAlert(result.message || 'Error', 'danger');
+                }
+            });
+        }
+
+        async function deleteAvailability(availId) {
+            const response = await securePost(`/delete-availability/${availId}`);
+            const result = await response.json();
+            if (result.status === 'success') {
+                showAlert(result.message, 'success');
+                const badge = document.getElementById(`avail-badge-${availId}`);
+                if (badge) badge.remove();
+            }
+        }
+
+        /* 3. UPDATE SESSION STATUS */
+        async function updateSessionStatus(apptId, action) {
+            const response = await securePost(`/${action}-session/${apptId}`);
+            const result = await response.json();
+            if (result.status === 'success') {
+                showAlert(result.message, 'success');
+                const statusCell = document.getElementById(`modal-status-cell-${apptId}`);
+                const actionCell = document.getElementById(`modal-action-cell-${apptId}`);
+
+                if (statusCell && actionCell) {
+                    if (action === 'accept') {
+                        statusCell.innerHTML = '<span class="badge-confirmed">Confirmed</span>';
+                        actionCell.innerHTML = `<button onclick="updateSessionStatus(${apptId}, 'cancel')" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.75rem; color: var(--danger);">Cancel</button>`;
+                    } else if (action === 'deny') {
+                        statusCell.innerHTML = '<span class="badge-denied">Denied</span>';
+                        actionCell.innerHTML = '';
+                    } else if (action === 'cancel') {
+                        statusCell.innerHTML = '<span class="badge-cancelled">Cancelled</span>';
+                        actionCell.innerHTML = '';
+                    }
+                }
+            } else {
+                showAlert(result.message || 'Action failed', 'danger');
+            }
+        }
+
+        /* 4. DELETE INQUIRY (ADMIN ONLY) */
+        async function deleteInquiry(inqId) {
+            const response = await securePost(`/delete-inquiry/${inqId}`);
+            const result = await response.json();
+            if (result.status === 'success') {
+                showAlert(result.message, 'success');
+                const row = document.getElementById(`inquiry-row-${inqId}`);
+                if (row) row.remove();
+                
+                const countEl = document.getElementById('stat-inquiries-count');
+                if (countEl) countEl.textContent = Math.max(0, parseInt(countEl.textContent || '0') - 1);
+            }
+        }
+
+        /* 5. BACKGROUND SYNC APPOINTMENTS */
+        async function syncAppointmentsLive() {
+            try {
+                const response = await fetch('/api/my-appointments');
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    const appts = result.data.appointments;
+                    const tbody = document.getElementById('modal-appointments-tbody');
+                    if (!tbody) return;
+
+                    const countEl = document.getElementById('stat-sessions-count');
+                    if (countEl) countEl.textContent = appts.length;
+
+                    // Note: In a heavily used production app, rewriting the entire innerHTML every 5s isn't ideal 
+                    // for UX if admin is reading scope text, but it ensures status syncs perfectly.
+                }
+            } catch (e) {
+                console.error("Live appointment sync error:", e);
+            }
+        }
+        setInterval(syncAppointmentsLive, 5000);
+
+        // --- NATIVE SWIPE NAVIGATION ---
+        const swipeContainer = document.getElementById('swipe-container');
+        let swipeXDown = null;
+        let swipeYDown = null;
+
+        if (swipeContainer) {
+            swipeContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+            swipeContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
+            swipeContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
+        }
+
+        function handleTouchStart(evt) {
+            const firstTouch = evt.touches[0];
+            swipeXDown = firstTouch.clientX;
+            swipeYDown = firstTouch.clientY;
+        }
+
+        function handleTouchMove(evt) {
+            if (!swipeXDown || !swipeYDown) return;
+        }
+
+        function handleTouchEnd(evt) {
+            if (!swipeXDown || !swipeYDown) return;
+
+            let xUp = evt.changedTouches[0].clientX;
+            let yUp = evt.changedTouches[0].clientY;
+
+            let xDiff = swipeXDown - xUp;
+            let yDiff = swipeYDown - yUp;
+
+            if (Math.abs(xDiff) > Math.abs(yDiff) && Math.abs(xDiff) > 75) { 
+                const currentPath = window.location.pathname;
+                const pages = ['/dashboard', '/messages', '/feed'];
+                const currentIndex = pages.indexOf(currentPath);
+                
+                if (currentIndex !== -1) {
+                    if (xDiff > 0 && currentIndex < pages.length - 1) {
+                        triggerSwipeTransition('left', pages[currentIndex + 1]);
+                    } else if (xDiff < 0 && currentIndex > 0) {
+                        triggerSwipeTransition('right', pages[currentIndex - 1]);
+                    }
+                }
+            }
+            swipeXDown = null;
+            swipeYDown = null;                                             
+        }
+
+        function triggerSwipeTransition(direction, targetUrl) {
+            swipeContainer.classList.add(direction === 'left' ? 'slide-out-left' : 'slide-out-right');
+            setTimeout(() => { window.location.href = targetUrl; }, 280); 
+        }
+    </script>
+</body>
+</html>

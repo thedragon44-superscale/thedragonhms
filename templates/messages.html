@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Secure Messages - The Dragon HMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Dark Grey Backgrounds */
+            --bg-body: #18181c; 
+            --bg-card: #222228; 
+            --bg-card-subtle: #2a2a32; 
+            --border-color: #383842;
+            
+            /* Royal Blue (Primary Brand) */
+            --brand-blue: #2563eb; 
+            --brand-blue-light: #3b82f6; 
+            --brand-blue-dark: #1d4ed8;
+            --blue-glow: rgba(37, 99, 235, 0.45); 
+            --blue-glow-subtle: rgba(37, 99, 235, 0.15);
+
+            /* Smokey Orange (Accents/Highlights) */
+            --brand-orange: #d97736;
+            --brand-orange-light: #f28b46;
+            
+            /* Typography & Colors */
+            --text-main: #f8fafc; 
+            --text-muted: #94a3b8;
+            --font-display: 'Playfair Display', serif; 
+            --font-body: 'Inter', sans-serif; 
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+            
+            /* Status Colors */
+            --danger: #ef4444; --danger-bg: rgba(239, 68, 68, 0.15);
+            --success: #10b981; --success-bg: rgba(16, 185, 129, 0.15);
+            
+            --space-xs: 0.5rem; --space-sm: 0.75rem; --space-md: 1rem; 
+            --space-lg: 1.5rem; --space-xl: 2rem;
+            --radius-md: 10px; --radius-lg: 18px;
+            --shadow-md: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+            --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* Strict lock to prevent viewport scrolling - 100dvh for mobile support, fallback to 100vh */
+        body { 
+            font-family: var(--font-body); background-color: var(--bg-body); color: var(--text-main); line-height: 1.6; -webkit-font-smoothing: antialiased; 
+            background-image: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(217, 119, 54, 0.08) 0%, transparent 40%); 
+            background-attachment: fixed; height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; margin: 0; 
+        }
+        
+        h1, h2, h3 { font-family: var(--font-display); color: var(--text-main); font-weight: 700; }
+        .text-gradient { background: linear-gradient(135deg, var(--brand-blue-light) 0%, var(--brand-blue) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* Navigation */
+        .app-nav { background: rgba(24, 24, 28, 0.85); backdrop-filter: blur(12px); color: white; padding: 0 5%; display: flex; justify-content: space-between; align-items: center; height: 70px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+        .logo-container { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .logo-img { height: 40px; width: auto; object-fit: contain; }
+        .logo-text { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; color: var(--text-main); }
+        .logo-text span { color: var(--brand-blue); }
+        
+        .app-nav-links { display: flex; gap: var(--space-lg); align-items: center; height: 100%; }
+        .app-nav-link { color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 0.9rem; height: 100%; display: flex; align-items: center; border-bottom: 2px solid transparent; transition: all var(--transition-base); }
+        .app-nav-link:hover { color: white; }
+        .app-nav-link.active { color: white; border-bottom-color: var(--brand-blue); }
+        .app-nav-logout { color: var(--brand-orange-light) !important; font-weight: 600; text-shadow: 0 0 10px rgba(242, 139, 70, 0.4); transition: all var(--transition-base); }
+        .app-nav-logout:hover { color: #ffffff !important; text-shadow: 0 0 15px var(--brand-orange); }
+
+        /* Chat Layout */
+        .chat-container { display: flex; flex-direction: column; width: 100%; max-width: 1000px; margin: 0 auto; padding: var(--space-md) 5%; height: calc(100vh - 70px); height: calc(100dvh - 70px); box-sizing: border-box; overflow: hidden; will-change: transform, opacity; animation: fadeInUp 0.5s var(--transition-base) both; }
+        
+        .chat-card { background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--border-color); display: flex; flex-direction: column; flex-grow: 1; min-height: 0; overflow: hidden; position: relative; }
+        .chat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--brand-blue), transparent); opacity: 0.7; z-index: 10; }
+
+        .chat-header { padding: var(--space-md) var(--space-lg); border-bottom: 1px solid var(--border-color); background: var(--bg-card-subtle); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; flex-wrap: wrap; gap: 10px; }
+        
+        .form-control { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-body); font-size: 0.9rem; background-color: #1a1a1f; color: var(--text-main); color-scheme: dark; outline: none; }
+        .form-control:focus { border-color: var(--brand-blue); box-shadow: 0 0 0 2px var(--blue-glow); }
+
+        .chat-box { flex-grow: 1; padding: var(--space-lg); overflow-y: auto; display: flex; flex-direction: column; gap: var(--space-md); background: #18181c; min-height: 0; }
+        
+        .message-wrapper { display: flex; flex-direction: column; max-width: 75%; }
+        .message-wrapper.mine { align-self: flex-end; align-items: flex-end; }
+        .message-wrapper.theirs { align-self: flex-start; align-items: flex-start; }
+        
+        .message-bubble { padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.5; position: relative; word-wrap: break-word; }
+        .message-wrapper.mine .message-bubble { background: linear-gradient(135deg, var(--brand-blue-dark) 0%, var(--brand-blue) 100%); color: white; border-bottom-right-radius: 4px; box-shadow: 0 4px 15px var(--blue-glow-subtle); }
+        .message-wrapper.theirs .message-bubble { background: var(--bg-card-subtle); color: var(--text-main); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; }
+        
+        .message-time { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; font-family: var(--font-mono); }
+
+        .chat-input-area { padding: var(--space-md); background: var(--bg-card-subtle); border-top: 1px solid var(--border-color); display: flex; gap: var(--space-md); flex-shrink: 0; }
+        .chat-input { flex-grow: 1; padding: 12px 16px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background: #18181c; color: white; font-family: var(--font-body); font-size: 0.95rem; outline: none; transition: border-color var(--transition-base); }
+        .chat-input:focus { border-color: var(--brand-blue); }
+        
+        .btn-send { background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-blue-dark) 100%); color: white; border: none; border-radius: var(--radius-lg); width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all var(--transition-base); box-shadow: 0 4px 15px var(--blue-glow); flex-shrink: 0; }
+        .btn-send:hover { transform: scale(1.05); box-shadow: 0 6px 20px var(--blue-glow); }
+        .btn-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .empty-chat { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-muted); text-align: center; padding: var(--space-xl); }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .nav-icon { display: none; }
+
+        @media (max-width: 640px) {
+            .chat-container { padding: 10px; height: calc(100vh - 70px); height: calc(100dvh - 70px); }
+            .message-wrapper { max-width: 85%; }
+            .chat-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            
+            .app-nav { 
+                padding: 10px; 
+                height: auto;
+                flex-direction: column; 
+                justify-content: center;
+                gap: 12px;
+            }
+            .app-nav-links { 
+                width: 100%;
+                justify-content: space-around; 
+                gap: 8px; 
+            }
+            .app-nav-link { font-size: 1.2rem; }
+            .nav-text { display: none; }
+            .nav-icon { display: inline; }
+            .app-nav-logout { 
+                font-size: 0.85rem !important; 
+                white-space: nowrap; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="app-nav">
+        <a href="{{ url_for('dashboard') }}" class="logo-container">
+            <img src="{{ url_for('static', filename='dragon_logo.png') }}" alt="Dragon HMS" class="logo-img">
+            <span class="logo-text">The Dragon <span>HMS</span>.</span>
+        </a>
+        <div class="app-nav-links">
+            <a href="{{ url_for('dashboard') }}" class="app-nav-link">
+                <span class="nav-icon">🏠</span><span class="nav-text">Portal</span>
+            </a>
+            <a href="{{ url_for('messages') }}" class="app-nav-link active">
+                <span class="nav-icon">💬</span><span class="nav-text">Messages</span>
+            </a>
+            <a href="{{ url_for('feed') }}" class="app-nav-link">
+                <span class="nav-icon">📰</span><span class="nav-text">Project Feed</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="app-nav-link app-nav-logout">Log Out</a>
+        </div>
+    </nav>
+
+    <main id="swipe-container" class="chat-container fade-in-up">
+        <div class="chat-card">
+            
+            <div class="chat-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    {% if target_id %}
+                    <img src="{{ url_for('static', filename='dragon_logo.png') }}" alt="Dragon HMS" style="width: 45px; height: 45px; border-radius: 50%; object-fit: contain; border: 2px solid var(--brand-blue); box-shadow: 0 0 10px var(--blue-glow-subtle); background-color: #1a1a1f; padding: 2px;">
+                    {% endif %}
+                    <div>
+                        <h2 style="font-size: 1.1rem; margin-bottom: 2px;">Secure <span class="text-gradient">Communications</span></h2>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                            <strong style="color: var(--text-main);">{{ partner_name | e }}</strong>
+                            {% if target_id %}
+                                {% if is_online %}
+                                    <span style="display: inline-block; width: 8px; height: 8px; background-color: var(--success); border-radius: 50%; box-shadow: 0 0 5px var(--success);"></span> <span style="color: var(--success); font-weight: 500;">Online</span>
+                                {% else %}
+                                    <span style="display: inline-block; width: 8px; height: 8px; background-color: var(--text-muted); border-radius: 50%;"></span> <span>Offline</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if session['role'] == 'agent' %}
+                <div>
+                    <form action="{{ url_for('messages') }}" method="GET" style="display: flex; gap: 8px;">
+                        <select name="client_id" class="form-control" onchange="this.form.submit()" style="min-width: 200px;">
+                            <option value="" disabled selected>Select client project...</option>
+                            {% for client in clients %}
+                                <option value="{{ client.id }}" {% if client.id|string == target_id|string %}selected{% endif %}>{{ client.email | e }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="chat-box" id="chatBox">
+                {% if target_id %}
+                    {% if chat_history %}
+                        {% for chat in chat_history %}
+                            <div class="message-wrapper {{ 'mine' if chat.is_mine else 'theirs' }}">
+                                <div class="message-bubble">
+                                    {{ chat.text | e }}
+                                    {% if not chat.is_mine and not chat.is_read %}
+                                        <span style="position: absolute; top: -4px; right: -4px; width: 10px; height: 10px; background-color: var(--brand-blue); border-radius: 50%; border: 2px solid var(--bg-card-subtle);"></span>
+                                    {% endif %}
+                                </div>
+                                <div class="message-time">{{ chat.timestamp }}</div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-chat">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">💬</div>
+                            <h3 style="margin-bottom: 5px;">No messages yet</h3>
+                            <p style="font-size: 0.9rem;">Send a message to start this encrypted conversation.</p>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="empty-chat">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">🔒</div>
+                        <h3 style="margin-bottom: 5px;">Inbox</h3>
+                        <p style="font-size: 0.9rem;">{% if session['role'] == 'agent' %}Select a client from the dropdown above to begin chatting.{% else %}Connection established. Awaiting messages.{% endif %}</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if target_id %}
+            <form id="message-form" class="chat-input-area">
+                <input type="text" id="message-input" class="chat-input" placeholder="Type a secure message..." required autocomplete="off">
+                <button type="submit" class="btn-send" id="btn-send" title="Send Encrypted">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </form>
+            {% endif %}
+
+        </div>
+    </main>
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const targetId = "{{ target_id }}";
+        const chatBox = document.getElementById('chatBox');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const btnSend = document.getElementById('btn-send');
+
+        if (chatBox) {
+            chatBox.scrollTop = 0;
+        }
+
+        const escapeHTML = (str) => {
+            return String(str).replace(/[&<>'"]/g, 
+                tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag)
+            );
+        };
+
+        if (messageForm) {
+            messageForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const content = messageInput.value.trim();
+                if (!content) return;
+
+                messageInput.disabled = true;
+                btnSend.disabled = true;
+
+                const formData = new FormData();
+                formData.append('receiver_id', targetId);
+                formData.append('content', content);
+
+                try {
+                    const response = await fetch("{{ url_for('send_message') }}", {
+                        method: 'POST',
+                        headers: { 
+                            'X-CSRFToken': csrfToken,
+                            'Accept': 'application/json' 
+                        },
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        const emptyState = document.querySelector('.empty-chat');
+                        if (emptyState) emptyState.remove();
+
+                        const safeText = escapeHTML(result.data.text);
+                        const safeTime = escapeHTML(result.data.timestamp);
+                        
+                        const msgHTML = `
+                            <div class="message-wrapper mine" style="animation: fadeInUp 0.3s ease-out both;">
+                                <div class="message-bubble">${safeText}</div>
+                                <div class="message-time">${safeTime}</div>
+                            </div>
+                        `;
+                        chatBox.insertAdjacentHTML('afterbegin', msgHTML);
+                        chatBox.scrollTop = 0;
+                        messageInput.value = '';
+                    } else {
+                        alert(result.message || 'Error sending message');
+                    }
+                } catch (err) {
+                    console.error("Message send error:", err);
+                    alert("Failed to send message. Please check your connection.");
+                } finally {
+                    messageInput.disabled = false;
+                    btnSend.disabled = false;
+                    messageInput.focus();
+                }
+            });
+        }
+        
+        // --- NATIVE SWIPE NAVIGATION (Interactive) ---
+        const swipeContainer = document.getElementById('swipe-container');
+        let swipeStartX = null;
+        let swipeStartY = null;
+        let currentTranslateX = 0;
+        let isSwiping = false;
+
+        const pages = ['/dashboard', '/messages', '/feed'];
+        const currentIndex = pages.indexOf(window.location.pathname);
+
+        if (swipeContainer) {
+            swipeContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+            swipeContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+            swipeContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
+        }
+
+        function handleTouchStart(evt) {
+            swipeStartX = evt.touches[0].clientX;
+            swipeStartY = evt.touches[0].clientY;
+            isSwiping = false;
+            
+            swipeContainer.style.transition = 'none';
+        }
+
+        function handleTouchMove(evt) {
+            if (!swipeStartX || !swipeStartY) return;
+
+            let xMove = evt.touches[0].clientX;
+            let yMove = evt.touches[0].clientY;
+
+            let xDiff = swipeStartX - xMove;
+            let yDiff = swipeStartY - yMove;
+
+            if (!isSwiping) {
+                if (Math.abs(xDiff) > Math.abs(yDiff) && Math.abs(xDiff) > 10) {
+                    isSwiping = true;
+                } else if (Math.abs(yDiff) > 10) {
+                    swipeStartX = null;
+                    swipeStartY = null;
+                    return;
+                }
+            }
+
+            if (isSwiping) {
+                if (evt.cancelable) evt.preventDefault(); 
+
+                if ((xDiff > 0 && currentIndex >= pages.length - 1) || (xDiff < 0 && currentIndex <= 0)) {
+                    currentTranslateX = -(xDiff * 0.25); 
+                } else {
+                    currentTranslateX = -xDiff;
+                }
+
+                swipeContainer.style.transform = `translateX(${currentTranslateX}px)`;
+                
+                let fadeAmount = 1 - (Math.abs(currentTranslateX) / window.innerWidth);
+                swipeContainer.style.opacity = Math.max(0.4, fadeAmount);
+            }
+        }
+
+        function handleTouchEnd(evt) {
+            if (!swipeStartX || !swipeStartY || !isSwiping) {
+                swipeStartX = null;
+                swipeStartY = null;
+                return;
+            }
+
+            swipeContainer.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease-out';
+            
+            const threshold = window.innerWidth * 0.25;
+
+            if (Math.abs(currentTranslateX) > threshold) {
+                if (currentTranslateX < 0 && currentIndex < pages.length - 1) {
+                    finishSwipe('-100vw', pages[currentIndex + 1]);
+                } else if (currentTranslateX > 0 && currentIndex > 0) {
+                    finishSwipe('100vw', pages[currentIndex - 1]);
+                } else {
+                    snapBack(); 
+                }
+            } else {
+                snapBack(); 
+            }
+
+            swipeStartX = null;
+            swipeStartY = null;
+            isSwiping = false;
+        }
+
+        function finishSwipe(translateVal, targetUrl) {
+            swipeContainer.style.transform = `translateX(${translateVal})`;
+            swipeContainer.style.opacity = '0';
+            setTimeout(() => {
+                window.location.href = targetUrl;
+            }, 280); 
+        }
+
+        function snapBack() {
+            swipeContainer.style.transform = 'translateX(0)';
+            swipeContainer.style.opacity = '1';
+            currentTranslateX = 0;
+        }
+    </script>
+</body>
+</html>

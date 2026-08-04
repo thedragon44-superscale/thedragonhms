@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>The Dragon HMS - Custom Operations Software</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-body: #18181c; --bg-card: #222228; --bg-card-subtle: #2a2a32; --border-color: #383842;
+            --brand-blue: #2563eb; --brand-blue-light: #3b82f6; --brand-blue-dark: #1d4ed8;
+            --blue-glow: rgba(37, 99, 235, 0.45); --blue-glow-subtle: rgba(37, 99, 235, 0.15);
+            --brand-orange: #d97736; --brand-orange-light: #f28b46; --brand-orange-dark: #b55d24;
+            --text-main: #f8fafc; --text-muted: #94a3b8;
+            --font-display: 'Playfair Display', serif; --font-body: 'Inter', sans-serif;
+            --danger: #ef4444; --danger-bg: rgba(239, 68, 68, 0.15);
+            --success: #10b981; --success-bg: rgba(16, 185, 129, 0.15);
+            --space-xs: 0.5rem; --space-sm: 0.75rem; --space-md: 1rem; --space-lg: 1.5rem; --space-xl: 2rem; --space-2xl: 3.5rem;
+            --radius-md: 10px; --radius-lg: 18px;
+            --shadow-md: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+            --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: var(--font-body); background-color: var(--bg-body); color: var(--text-main); line-height: 1.6; -webkit-font-smoothing: antialiased;
+            background-image: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.08) 0%, transparent 55%), radial-gradient(circle at 80% 80%, rgba(217, 119, 54, 0.05) 0%, transparent 40%);
+            background-attachment: fixed; min-height: 100vh;
+        }
+
+        h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text-main); font-weight: 700; }
+        .text-gradient { background: linear-gradient(135deg, var(--brand-blue-light) 0%, var(--brand-blue) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .text-orange { color: var(--brand-orange-light); }
+
+        /* NAVBAR */
+        nav { background: rgba(24, 24, 28, 0.85); backdrop-filter: blur(12px); padding: 10px 6%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }
+        .logo-container { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .logo-img { height: 45px; width: auto; object-fit: contain; }
+        .logo-text { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
+        .logo-text span { color: var(--brand-blue); }
+        
+        .nav-links { display: flex; gap: var(--space-md); align-items: center; }
+        
+        /* BUTTONS */
+        .btn { display: inline-flex; justify-content: center; align-items: center; padding: 12px 24px; border-radius: var(--radius-md); font-weight: 600; font-size: 1rem; text-decoration: none; cursor: pointer; border: none; transition: all var(--transition-base); }
+        .btn-primary { background: #2a2a32; color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-primary:hover { background: #383842; border-color: var(--brand-blue); color: #ffffff; }
+        .btn-blue { background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-blue-dark) 100%); color: #ffffff; box-shadow: 0 4px 15px var(--blue-glow); }
+        .btn-blue:hover { transform: translateY(-2px); box-shadow: 0 6px 25px var(--blue-glow); }
+        .btn-blue:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-orange-outline { border: 1px solid var(--brand-orange); color: var(--brand-orange-light); background: transparent; }
+        .btn-orange-outline:hover { background: rgba(242, 139, 70, 0.1); }
+
+        /* MAIN CONTENT */
+        .hero { padding: var(--space-2xl) 5% var(--space-xl) 5%; text-align: center; max-width: 900px; margin: 0 auto; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: var(--space-md); line-height: 1.1; }
+        .hero p { font-size: 1.15rem; color: var(--text-muted); margin-bottom: var(--space-lg); line-height: 1.8; }
+        .hero-actions { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+
+        .sales-container { max-width: 1000px; margin: 0 auto var(--space-2xl) auto; padding: 0 5%; display: flex; flex-direction: column; gap: var(--space-xl); }
+        
+        .card { background: var(--bg-card); border-radius: var(--radius-lg); padding: var(--space-xl); box-shadow: var(--shadow-md); border: 1px solid var(--border-color); position: relative; }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--brand-blue), transparent); opacity: 0.6; }
+
+        .pro-con-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl); margin-top: var(--space-md); }
+        .vs-column h3 { margin-bottom: 10px; font-family: var(--font-body); font-size: 1.2rem; }
+        .list-pros { list-style: none; margin-bottom: 15px; }
+        .list-pros li { position: relative; padding-left: 25px; margin-bottom: 8px; color: var(--text-main); font-size: 0.95rem; }
+        .list-pros li::before { content: '✓'; color: var(--success); position: absolute; left: 0; font-weight: bold; }
+        .list-cons { list-style: none; }
+        .list-cons li { position: relative; padding-left: 25px; margin-bottom: 8px; color: var(--text-muted); font-size: 0.95rem; }
+        .list-cons li::before { content: '✕'; color: var(--danger); position: absolute; left: 0; font-weight: bold; }
+
+        /* MODALS */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; padding: var(--space-xl); position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); animation: slideUp 0.3s ease-out; }
+        .modal-content::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--brand-orange), transparent); }
+        .modal-close { position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; transition: color 0.2s; }
+        .modal-close:hover { color: var(--brand-orange-light); }
+
+        /* WIZARD STYLES */
+        .wizard-step { display: none; animation: fadeIn 0.4s ease forwards; }
+        .wizard-step.active { display: block; }
+        .wizard-option { background: var(--bg-card-subtle); border: 1px solid var(--border-color); padding: 15px; border-radius: var(--radius-md); margin-bottom: 10px; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; }
+        .wizard-option:hover { border-color: var(--brand-blue); background: rgba(37, 99, 235, 0.05); }
+        .wizard-option.selected { border-color: var(--brand-orange-light); background: rgba(242, 139, 70, 0.1); color: var(--brand-orange-light); font-weight: 600; }
+        
+        .game-plan-box { background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); padding: var(--space-md); border-radius: var(--radius-md); margin-bottom: var(--space-md); }
+
+        /* FORM & CALENDAR STYLES */
+        .form-group { margin-bottom: var(--space-md); }
+        .form-group label { display: block; font-weight: 500; font-size: 0.85rem; margin-bottom: var(--space-xs); color: var(--text-muted); }
+        .form-control { width: 100%; padding: var(--space-sm) var(--space-md); border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-body); font-size: 1rem; background-color: #1a1a1f; color: var(--text-main); }
+        .form-control:focus { outline: none; border-color: var(--brand-blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+        .alert { padding: var(--space-md); border-radius: var(--radius-md); margin-bottom: var(--space-lg); font-size: 0.95rem; display: none; background-color: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .pro-con-grid { grid-template-columns: 1fr; gap: var(--space-lg); }
+            .hero-actions { flex-direction: column; }
+            .nav-links .btn { padding: 6px 12px; font-size: 0.85rem; }
+        }
+
+        /* =========================================
+           INTERACTIVE PORTFOLIO THEMES
+           ========================================= */
+        /* Theme 2: Cyber Security */
+        body.theme-cyber {
+            --bg-body: #050505; --bg-card: #0a0a0c; --border-color: #1a3320;
+            --brand-blue: #00ff41; --brand-blue-light: #00ff41; --brand-blue-dark: #008f11;
+            --blue-glow: rgba(0, 255, 65, 0.4);
+            --brand-orange: #ff003c; --brand-orange-light: #ff4d4d;
+            --text-main: #e0e0e0; --text-muted: #008f11;
+            --font-display: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; 
+            --font-body: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+            --radius-md: 0px; --radius-lg: 0px; /* Sharp aggressive edges */
+            background-image: radial-gradient(circle at 50% 0%, rgba(0, 255, 65, 0.05) 0%, transparent 50%);
+        }
+
+        /* Theme 3: FinTech / Corporate */
+        body.theme-fintech {
+            --bg-body: #f8fafc; --bg-card: #ffffff; --border-color: #e2e8f0;
+            --brand-blue: #0f172a; --brand-blue-light: #334155; --brand-blue-dark: #020617;
+            --blue-glow: rgba(15, 23, 42, 0.15);
+            --brand-orange: #d97736;
+            --text-main: #0f172a; --text-muted: #64748b;
+            --font-display: 'Inter', sans-serif; 
+            --radius-md: 12px; --radius-lg: 24px; /* Soft approachable edges */
+            background-image: none;
+        }
+
+        /* UI Switcher Floating Button */
+        .ui-switcher-btn {
+            position: fixed; bottom: 30px; left: 30px;
+            background: var(--bg-card); border: 1px solid var(--brand-blue);
+            color: var(--brand-blue-light); padding: 10px 20px; border-radius: var(--radius-full);
+            font-size: 0.85rem; font-weight: 600; cursor: pointer; z-index: 1000;
+            box-shadow: 0 5px 15px var(--blue-glow); transition: all 0.3s ease;
+        }
+        .ui-switcher-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px var(--blue-glow); }
+        
+        /* DNS Grid */
+        .dns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .dns-box { background: var(--bg-body); border: 1px solid var(--border-color); padding: 15px; border-radius: var(--radius-md); }
+        .dns-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
+        .dns-value { font-size: 1.1rem; color: var(--text-main); font-weight: 600; word-break: break-all; }
+        
+        /* Special Feature Floating Buttons */
+        .special-feature-btn {
+            position: fixed; bottom: 30px; right: 30px;
+            padding: 12px 24px; border-radius: var(--radius-full);
+            font-size: 0.9rem; font-weight: bold; cursor: pointer; z-index: 1000;
+            transition: all 0.3s ease; display: none; /* Invisible on Default Theme */
+        }
+        
+        body.theme-cyber .special-feature-btn.btn-dns {
+            display: inline-flex;
+            background: rgba(0, 255, 65, 0.1); border: 1px solid #00ff41; color: #00ff41;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2); text-transform: uppercase;
+        }
+        body.theme-cyber .special-feature-btn.btn-dns:hover { background: #00ff41; color: #000; }
+
+        body.theme-fintech .special-feature-btn.btn-csv {
+            display: inline-flex;
+            background: var(--brand-blue); border: none; color: #fff;
+            box-shadow: 0 5px 15px var(--blue-glow);
+        }
+        body.theme-fintech .special-feature-btn.btn-csv:hover { transform: translateY(-3px); box-shadow: 0 8px 20px var(--blue-glow); }
+        
+        /* CSV Table Styles */
+        .csv-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
+        .csv-table th, .csv-table td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        /* Light blue text for readability */
+        .csv-table td { color: #7dd3fc; }
+        .csv-table th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+        .csv-table tr:hover td { background: var(--bg-card-subtle); }
+        .amt-positive { color: #10b981; font-weight: 600; }
+        .amt-negative { color: #ef4444; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="/" class="logo-container">
+            <img src="{{ url_for('static', filename='dragon_logo.png') }}" alt="Dragon HMS Logo" class="logo-img">
+            <span class="logo-text">The Dragon <span>HMS</span>.</span>
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('login') }}" class="btn btn-primary">Client Login</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>Escape the SaaS Trap. <br><span class="text-gradient">Build Your Own Engine.</span></h1>
+        <p>The Dragon Hosting & Management Systems builds completely custom, self-hosted software infrastructure to automate your logistics, billing, and scheduling. Stop paying monthly fees for apps that don't talk to each other.</p>
+        <div class="hero-actions">
+            <button onclick="openModal('wizard-modal')" class="btn btn-blue">Scope Your Project</button>
+            <button onclick="openModal('tech-stack-modal')" class="btn btn-orange-outline">View Our Tech Stack</button>
+        </div>
+    </header>
+
+    <main class="sales-container">
+        
+        <section class="card">
+            <h2 style="margin-bottom: var(--space-md);">We Host It <span class="text-gradient">On Our Hardware.</span></h2>
+            <p style="color: var(--text-muted); font-size: 1.05rem; margin-bottom: var(--space-md);">
+                In modern web development, most agencies build your app by stringing together expensive corporate subscriptions. They host your database on Neon, process your backend logic on Render, and store your files on Amazon AWS. Every month, you bleed cash to 3 or 4 different massive tech conglomerates just to keep the lights on.
+            </p>
+            <p style="color: var(--text-main); font-size: 1.05rem; font-weight: 500;">
+                The Dragon HMS is different. We develop, deploy, and host your custom infrastructure directly on our own private, dedicated server hardware. You get a centralized, unbreakable system without the bloated corporate middleman fees.
+            </p>
+        </section>
+
+        <section class="card">
+            <h2 style="margin-bottom: var(--space-sm);">The Dragon HMS <span class="text-orange">vs. Website Builders</span></h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Why you shouldn't use a drag-and-drop builder for your business operations.</p>
+            
+            <div class="pro-con-grid">
+                <div class="vs-column">
+                    <h3>Squarespace / GoDaddy</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">Best for digital brochures and simple blogs.</p>
+                    <ul class="list-pros">
+                        <li>Cheap ($15-$30/month)</li>
+                        <li>Instant setup with pre-made templates</li>
+                    </ul>
+                    <ul class="list-cons">
+                        <li>Highly rigid. You are forced to operate your business the way their template dictates.</li>
+                        <li>Impossible to build complex custom logic (like a dynamic auto-parts estimator or a custom dispatch tracker).</li>
+                        <li>You don't own the underlying code or database structure.</li>
+                    </ul>
+                </div>
+                
+                <div class="vs-column">
+                    <h3 style="color: var(--brand-blue-light);">The Dragon HMS</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">Best for complex operational workflows.</p>
+                    <ul class="list-pros">
+                        <li>We build actual <strong>systems</strong>, not just websites.</li>
+                        <li>Completely tailored to your exact workflow. If you can dream the logic, we can code it.</li>
+                        <li>Includes secure file vaults, deeply integrated Stripe billing, and custom relational databases.</li>
+                    </ul>
+                    <ul class="list-cons">
+                        <li>Requires an upfront consultation to scope out the build logic.</li>
+                        <li>Not an instant, 5-minute setup.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- TECH STACK MODAL (Highly Technical) -->
+    <div id="tech-stack-modal" class="modal-overlay" onclick="closeModal(event, 'tech-stack-modal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal(null, 'tech-stack-modal')">&times;</button>
+            <h2 style="margin-bottom: var(--space-xs);">Under the <span class="text-orange">Hood</span></h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: var(--space-lg);">A transparent look at the enterprise-grade tools powering your custom infrastructure.</p>
+            
+            <div style="margin-bottom: var(--space-md);">
+                <h4 style="color: var(--text-main);">Python & Flask (Backend Architecture)</h4>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">A lightning-fast, lightweight microframework that allows us to write highly customized business logic without the bloat of massive CMS platforms.</p>
+            </div>
+            <div style="margin-bottom: var(--space-md);">
+                <h4 style="color: var(--text-main);">PostgreSQL (Relational Database)</h4>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">The world's most advanced open-source relational database. We use it to ensure strict data integrity, allowing complex querying between your clients, appointments, and logistics.</p>
+            </div>
+            <div style="margin-bottom: var(--space-md);">
+                <h4 style="color: var(--text-main);">MinIO / S3 API (Object Storage)</h4>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">High-performance, private object storage. Instead of storing your sensitive client documents in a public web folder, they are secured in an isolated bucket architecture.</p>
+            </div>
+            <div style="margin-bottom: var(--space-md);">
+                <h4 style="color: var(--text-main);">Fernet Symmetric Encryption</h4>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">All internal communications between you and your clients in the portal are scrambled using url-safe base64-encoded 32-byte keys, ensuring absolute privacy.</p>
+            </div>
+            <div>
+                <h4 style="color: var(--text-main);">Stripe API (Payment Gateway)</h4>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">PCI-compliant payment processing directly integrated into your database to handle complex quotes, dynamic estimating, and subscription billing seamlessly.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- WIZARD & BOOKING MODAL -->
+    <div id="wizard-modal" class="modal-overlay" onclick="closeModal(event, 'wizard-modal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal(null, 'wizard-modal')">&times;</button>
+            
+            <div id="wizard-section">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-xs);">
+                    <h2>System <span class="text-blue">Scoping Wizard</span></h2>
+                    <button id="wizard-back-btn" onclick="goBack()" style="display: none; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; transition: color 0.2s;">&larr; Back</button>
+                </div>
+                <p id="step-counter-text" style="color: var(--text-muted); margin-bottom: var(--space-md); font-size: 0.9rem;">Step <span id="current-step-display">1</span> of 5</p>
+
+                <div id="step-1" class="wizard-step active">
+                    <h3 style="margin-bottom: 15px; font-size: 1.1rem;">1. What is the nature of your business/organization?</h3>
+                    <div class="wizard-option" onclick="selectOption(1, 'Automotive / Mechanics / Transportation')">Automotive / Mechanics / Transportation</div>
+                    <div class="wizard-option" onclick="selectOption(1, 'Financial / Tax Preparation / Insurance')">Financial / Tax Preparation / Insurance</div>
+                    <div class="wizard-option" onclick="selectOption(1, 'Freelance / Independent Agent')">Freelance / Independent Agent</div>
+                    <div class="wizard-option" onclick="selectOption(1, 'Service Provider / Consulting')">Service Provider / Consulting</div>
+                    <div class="wizard-option" onclick="selectOption(1, 'Retail / E-commerce')">Retail / E-commerce</div>
+                </div>
+
+                <div id="step-2" class="wizard-step">
+                    <h3 style="margin-bottom: 15px; font-size: 1.1rem;">2. What is your primary method for handling revenue and pricing?</h3>
+                    <div class="wizard-option" onclick="selectOption(2, 'Building custom parts & labor estimates or complex quotes.')">Building custom parts & labor estimates or complex quotes.</div>
+                    <div class="wizard-option" onclick="selectOption(2, 'Processing one-time payments for services or digital goods.')">Processing one-time payments for services or digital goods.</div>
+                    <div class="wizard-option" onclick="selectOption(2, 'Managing recurring monthly subscriptions or retainers.')">Managing recurring monthly subscriptions or retainers.</div>
+                    <div class="wizard-option" onclick="selectOption(2, 'We handle billing completely offline.')">We handle billing completely offline.</div>
+                </div>
+
+                <div id="step-3" class="wizard-step">
+                    <h3 style="margin-bottom: 15px; font-size: 1.1rem;">3. How do you currently manage scheduling, dispatch, or client intake?</h3>
+                    <div class="wizard-option" onclick="selectOption(3, 'Clients need to book themselves online based on our availability.')">Clients need to book themselves online based on our availability.</div>
+                    <div class="wizard-option" onclick="selectOption(3, 'We track physical assets and dispatch logistics.')">We track physical assets and dispatch logistics.</div>
+                    <div class="wizard-option" onclick="selectOption(3, 'We manually schedule everything over the phone or email.')">We manually schedule everything over the phone or email.</div>
+                    <div class="wizard-option" onclick="selectOption(3, 'Not applicable to our workflow.')">Not applicable to our workflow.</div>
+                </div>
+
+                <div id="step-4" class="wizard-step">
+                    <h3 style="margin-bottom: 15px; font-size: 1.1rem;">4. How do you handle document sharing, media, or sensitive client files?</h3>
+                    <div class="wizard-option" onclick="selectOption(4, 'High Security: We need encrypted vaults for PII and sensitive docs.')">High Security: We need encrypted vaults for PII and sensitive docs.</div>
+                    <div class="wizard-option" onclick="selectOption(4, 'Visual/Media: We need to attach inspection photos or media to profiles.')">Visual/Media: We need to attach inspection photos or media to profiles.</div>
+                    <div class="wizard-option" onclick="selectOption(4, 'Minimal: Mostly internal notes and public-facing content.')">Minimal: Mostly internal notes and public-facing content.</div>
+                </div>
+
+                <div id="step-5" class="wizard-step">
+                    <h3 style="margin-bottom: 15px; font-size: 1.1rem;">5. Where is your biggest operational bottleneck right now?</h3>
+                    <div class="wizard-option" onclick="selectOption(5, 'Tracking physical inventory, vehicle statuses, or logistics.')">Tracking physical inventory, vehicle statuses, or logistics.</div>
+                    <div class="wizard-option" onclick="selectOption(5, 'Securely communicating with clients (lost emails, scattered texts).')">Securely communicating with clients (lost emails, scattered texts).</div>
+                    <div class="wizard-option" onclick="selectOption(5, 'Scattered internal data (using too many different apps).')">Scattered internal data (using too many different apps).</div>
+                </div>
+
+                <!-- RESULT STAGE -->
+                <div id="step-result" class="wizard-step">
+                    <h3 style="margin-bottom: 15px; font-size: 1.3rem;">Your <span class="text-gradient">Game Plan</span></h3>
+                    <div class="game-plan-box" id="game-plan-container" style="color: var(--text-main); line-height: 1.6;">
+                        <!-- Bullet points injected here via JS -->
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">To execute this build, book your initial discovery consultation below. The $150 consultation fee is applied directly to your build total.</p>
+                    <button onclick="revealBooking()" class="btn btn-blue" style="width: 100%;">View Available Consultation Slots</button>
+                </div>
+            </div>
+
+            <!-- HIDDEN BOOKING MODULE (Inside Modal) -->
+            <div id="booking-section" style="display: none;">
+                <h2 style="margin-bottom: var(--space-md);">Book <span class="text-orange">Consultation</span></h2>
+                <div id="alert-box" class="alert"></div>
+                
+                <form id="book-slot-form">
+                    <input type="hidden" id="csrf_token" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" id="session_type" name="session_type" value="Initial Consultation (15m)">
+                    <input type="hidden" id="duration_minutes" name="duration_minutes" value="15">
+                    <input type="hidden" id="project_scope" name="project_scope" value="">
+                    <input type="hidden" id="slot_timestamp" name="slot_timestamp" required>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label>Your Name</label>
+                            <input type="text" name="guest_name" class="form-control" required placeholder="John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" name="guest_email" class="form-control" required placeholder="john@company.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label id="slot-label" style="text-align: center; margin-bottom: 10px; font-weight: 600;">Select an Available Date</label>
+                        <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: var(--space-md); text-align: center;">
+                            <!-- Calendar injected via JS -->
+                        </div>
+                        <div id="time-slots-container" style="display: none; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin-top: var(--space-md);">
+                            <!-- Time bubbles injected via JS -->
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-book-submit" class="btn btn-blue" style="width: 100%;" disabled>
+                        Proceed to Payment ($150)
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Theme Switcher Button -->
+    <button class="ui-switcher-btn" onclick="openUiModal()">✨ Capabilities Showcase</button>
+
+    <!-- Theme Selection Modal -->
+    <div id="ui-modal" class="modal-overlay" onclick="closeUiModal(event)" style="z-index: 3000;">
+        <div class="modal-content" style="max-width: 500px;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>UI & UX <span class="text-gradient">Showcase</span></h2>
+                <button class="modal-close" onclick="closeUiModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                    Select a theme below to instantly re-render this portal. Notice how the Scoping Wizard, Booking Engine, and Modals completely adapt their structure and styling.
+                </p>
+                
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button onclick="setTheme('default')" class="btn btn-outline" style="justify-content: flex-start; padding: 15px;">
+                        <strong>The Dragon HMS</strong> (Industrial SaaS)
+                    </button>
+                    <button onclick="setTheme('cyber')" class="btn btn-outline" style="justify-content: flex-start; padding: 15px; border-color: #00ff41; color: #00ff41;">
+                        <strong>CyberSec Terminal</strong> (Sharp, Monospace)
+                    </button>
+                    <button onclick="setTheme('fintech')" class="btn btn-outline" style="justify-content: flex-start; padding: 15px; border-color: #0f172a; color: #0f172a; background: #f8fafc;">
+                        <strong>FinTech Corporate</strong> (Clean, Soft Edges)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Special Feature Triggers -->
+    <button onclick="openDnsModal()" class="special-feature-btn btn-dns">▶ Network Diagnostics</button>
+    <button onclick="openCsvModal()" class="special-feature-btn btn-csv">📊 POS Ledger Analyzer</button>
+
+    <!-- CSV POS Ledger Analyzer Modal -->
+    <div id="csv-modal" class="modal-overlay" onclick="closeCsvModal(event)" style="z-index: 3500;">
+        <div class="modal-content" style="max-width: 700px;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Ledger <span class="text-gradient">Analyzer</span></h2>
+                <button class="modal-close" onclick="closeCsvModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                    Upload a raw point-of-sale CSV export. The system will parse the data locally in your browser to calculate net volume and categorize transactions.
+                </p>
+                
+                <div style="border: 2px dashed var(--border-color); padding: 20px; text-align: center; border-radius: var(--radius-md); position: relative; background: var(--bg-card-subtle);">
+                    <p style="font-weight: 600; color: var(--brand-blue-light);" id="csv-upload-text">Click to load demo POS data, or drag a .csv here</p>
+                    <input type="file" id="csv-upload-input" accept=".csv" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                </div>
+
+                <div id="csv-results" style="display: none; margin-top: 20px;">
+                    <!-- Business Intelligence Metrics -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
+                        <div style="background: var(--bg-body); padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Net Revenue</div>
+                            <div style="font-size: 1.1rem; font-weight: bold; color: #10b981;" id="csv-net-rev">$0.00</div>
+                        </div>
+                        <div style="background: var(--bg-body); padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Avg Order Value</div>
+                            <div style="font-size: 1.1rem; font-weight: bold; color: var(--text-main);" id="csv-aov">$0.00</div>
+                        </div>
+                        <div style="background: var(--bg-body); padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">30-Day Projection</div>
+                            <div style="font-size: 1.1rem; font-weight: bold; color: var(--brand-blue-light);" id="csv-proj-30">$0.00</div>
+                        </div>
+                        <div style="background: var(--bg-body); padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Refund Rate</div>
+                            <div style="font-size: 1.1rem; font-weight: bold; color: var(--danger);" id="csv-refund-rate">0%</div>
+                        </div>
+                    </div>
+
+                    <!-- Revenue Trend Chart -->
+                    <div style="background: var(--bg-body); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 15px; height: 220px; position: relative;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    
+                    <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                        <table class="csv-table" id="csv-table-element">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Transaction ID</th>
+                                    <th>Type</th>
+                                    <th style="text-align: right;">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="csv-tbody">
+                                <!-- Data injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DNS / IP Leak Tester Modal -->
+    <div id="dns-modal" class="modal-overlay" onclick="closeDnsModal(event)" style="z-index: 3500;">
+        <div class="modal-content" style="max-width: 600px;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Network <span class="text-gradient">Diagnostics</span></h2>
+                <button class="modal-close" onclick="closeDnsModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <button id="btn-run-dns" onclick="runDnsTest()" class="btn btn-blue" style="width: 100%; margin-bottom: 20px;">Execute Leak Test</button>
+                
+                <div id="dns-results" style="display: none;">
+                    <div class="dns-grid">
+                        <div class="dns-box">
+                            <div class="dns-label">Public IP Address</div>
+                            <div class="dns-value" id="dns-ip">Scanning...</div>
+                        </div>
+                        <div class="dns-box">
+                            <div class="dns-label">ISP / Organization</div>
+                            <div class="dns-value" id="dns-isp">Scanning...</div>
+                        </div>
+                        <div class="dns-box">
+                            <div class="dns-label">Geolocation Target</div>
+                            <div class="dns-value" id="dns-loc">Scanning...</div>
+                        </div>
+                        <div class="dns-box">
+                            <div class="dns-label">WebRTC Leak Status</div>
+                            <div class="dns-value" id="dns-webrtc" style="color: var(--brand-orange);">Vulnerable</div>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 15px; text-align: center;">
+                        * This diagnostic tool pings external endpoints to reveal the exact footprint your browser is broadcasting to web servers.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        // --- MODAL LOGIC ---
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+            document.body.style.overflow = 'hidden'; 
+        }
+        
+        function closeModal(e, modalId) {
+            if (!e || e.target.id === modalId) {
+                document.getElementById(modalId).style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // --- THEME SWITCHER LOGIC ---
+        function openUiModal() { 
+            document.getElementById('ui-modal').style.display = 'flex'; 
+            document.body.style.overflow = 'hidden';
+        }
+        function closeUiModal(e) {
+            if (!e || e.target.id === 'ui-modal' || e.target.classList.contains('modal-close')) {
+                document.getElementById('ui-modal').style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+        
+        function setTheme(themeName) {
+            document.body.className = ''; 
+            if (themeName !== 'default') {
+                document.body.classList.add(`theme-${themeName}`);
+            }
+            closeUiModal();
+        }
+
+        // --- DNS LEAK TESTER LOGIC ---
+        function openDnsModal() {
+            closeUiModal();
+            document.getElementById('dns-modal').style.display = 'flex';
+        }
+        function closeDnsModal(e) {
+            if (!e || e.target.id === 'dns-modal' || e.target.classList.contains('modal-close')) {
+                document.getElementById('dns-modal').style.display = 'none';
+                document.getElementById('dns-results').style.display = 'none';
+                document.getElementById('btn-run-dns').innerText = "Execute Leak Test";
+            }
+        }
+
+        async function runDnsTest() {
+            const btn = document.getElementById('btn-run-dns');
+            const resultsDiv = document.getElementById('dns-results');
+            
+            btn.innerText = "Analyzing Network Packets... ⏳";
+            btn.disabled = true;
+            resultsDiv.style.display = 'block';
+            
+            document.getElementById('dns-ip').innerText = "Scanning...";
+            document.getElementById('dns-isp').innerText = "Scanning...";
+            document.getElementById('dns-loc').innerText = "Scanning...";
+            document.getElementById('dns-webrtc').innerText = "Testing...";
+            document.getElementById('dns-webrtc').style.color = "var(--text-main)";
+
+            const checkWebRTC = new Promise((resolve) => {
+                const rtc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+                rtc.createDataChannel("rtc");
+                rtc.createOffer().then(offer => rtc.setLocalDescription(offer)).catch(() => resolve("Secure"));
+                
+                let resolved = false;
+                rtc.onicecandidate = (event) => {
+                    if (event && event.candidate && event.candidate.candidate && !resolved) {
+                        const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
+                        const match = ipRegex.exec(event.candidate.candidate);
+                        if (match) {
+                            resolved = true;
+                            resolve(`Leaking: ${match[1]}`);
+                            rtc.onicecandidate = null;
+                        }
+                    }
+                };
+                setTimeout(() => { if (!resolved) resolve("Secure (No Leak)"); }, 2500);
+            });
+
+            try {
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                document.getElementById('dns-ip').innerText = ipData.ip;
+
+                const geoResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
+                const geoData = await geoResponse.json();
+                
+                document.getElementById('dns-isp').innerText = geoData.org || geoData.asn || "Unknown";
+                document.getElementById('dns-loc').innerText = `${geoData.city}, ${geoData.region}, ${geoData.country_name}`;
+
+                const rtcResult = await checkWebRTC;
+                const webrtcEl = document.getElementById('dns-webrtc');
+                webrtcEl.innerText = rtcResult;
+                if (rtcResult.includes("Leaking")) {
+                    webrtcEl.style.color = "var(--brand-orange)";
+                } else {
+                    webrtcEl.style.color = "var(--success)";
+                }
+                
+            } catch (error) {
+                console.error("Diagnostic Failed:", error);
+                document.getElementById('dns-ip').innerText = "Fetch Error";
+                document.getElementById('dns-isp').innerText = "Firewall Blocked";
+            } finally {
+                btn.innerText = "Diagnostics Complete";
+                btn.disabled = false;
+            }
+        }
+
+        // --- CSV LEDGER ANALYZER LOGIC ---
+        let revenueChartInstance = null;
+
+        function openCsvModal() {
+            closeUiModal();
+            document.getElementById('csv-modal').style.display = 'flex';
+        }
+        function closeCsvModal(e) {
+            if (!e || e.target.id === 'csv-modal' || e.target.classList.contains('modal-close')) {
+                document.getElementById('csv-modal').style.display = 'none';
+            }
+        }
+
+        const csvInput = document.getElementById('csv-upload-input');
+        if (csvInput) {
+            csvInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    document.getElementById('csv-upload-text').innerText = `Analyzing: ${file.name}...`;
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        parseCSV(event.target.result);
+                    };
+                    reader.readAsText(file);
+                } else {
+                    document.getElementById('csv-upload-text').innerText = "Analyzing demo_ledger.csv...";
+                    setTimeout(() => {
+                        const mockCSV = `Date,TxnID,Type,Amount\n2026-08-01,txn_101,Sale,250.00\n2026-08-02,txn_102,Sale,320.50\n2026-08-02,txn_103,Refund,-50.00\n2026-08-03,txn_104,Sale,410.25\n2026-08-04,txn_105,Sale,180.00\n2026-08-04,txn_106,Sale,95.50\n2026-08-05,txn_107,Sale,550.00\n2026-08-05,txn_108,Fee,-12.50`;
+                        parseCSV(mockCSV);
+                    }, 600);
+                }
+            });
+        }
+
+        function parseCSV(csvText) {
+            const rows = csvText.split('\n').filter(row => row.trim() !== '');
+            const tbody = document.getElementById('csv-tbody');
+            tbody.innerHTML = '';
+            
+            let totalVolume = 0;
+            let netRevenue = 0;
+            let salesCount = 0;
+            let refundTotal = 0;
+            let dailyData = {}; 
+
+            for (let i = 1; i < rows.length; i++) {
+                const cols = rows[i].split(',');
+                if (cols.length >= 4) {
+                    const date = cols[0];
+                    const txnid = cols[1];
+                    const type = cols[2];
+                    const amount = parseFloat(cols[3]);
+
+                    if (amount > 0) {
+                        totalVolume += amount;
+                        if (type.toLowerCase().includes('sale')) salesCount++;
+                    } else if (type.toLowerCase().includes('refund')) {
+                        refundTotal += Math.abs(amount);
+                    }
+                    
+                    netRevenue += amount;
+
+                    if (!dailyData[date]) dailyData[date] = 0;
+                    dailyData[date] += amount;
+
+                    const amtClass = amount >= 0 ? 'amt-positive' : 'amt-negative';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${date}</td>
+                        <td style="font-family: monospace; color: var(--brand-blue-light);">${txnid}</td>
+                        <td>${type}</td>
+                        <td style="text-align: right;" class="${amtClass}">$${Math.abs(amount).toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            }
+
+            const avgOrderValue = salesCount > 0 ? (totalVolume / salesCount) : 0;
+            const refundRate = totalVolume > 0 ? (refundTotal / totalVolume) * 100 : 0;
+            
+            const dates = Object.keys(dailyData).sort();
+            const activeDays = dates.length > 0 ? dates.length : 1;
+            const dailyAvg = netRevenue / activeDays;
+            const projected30 = dailyAvg * 30;
+
+            document.getElementById('csv-net-rev').innerText = `$${netRevenue.toFixed(2)}`;
+            document.getElementById('csv-aov').innerText = `$${avgOrderValue.toFixed(2)}`;
+            document.getElementById('csv-proj-30').innerText = `$${projected30.toFixed(2)}`;
+            document.getElementById('csv-refund-rate').innerText = `${refundRate.toFixed(1)}%`;
+
+            document.getElementById('csv-results').style.display = 'block';
+            document.getElementById('csv-upload-text').innerText = "Analysis Complete. Load another file?";
+            
+            // FIX: Wait 50ms to allow the browser to paint the visible container dimensions before charting
+            setTimeout(() => {
+                renderChart(dates, dates.map(d => dailyData[d]));
+            }, 50);
+        }
+
+        function renderChart(labels, data) {
+            const canvas = document.getElementById('revenueChart');
+            const ctx = canvas.getContext('2d');
+            
+            if (revenueChartInstance) {
+                revenueChartInstance.destroy(); 
+            }
+
+            if (typeof Chart === 'undefined') {
+                console.warn("Chart.js failed to load.");
+                return;
+            }
+
+            revenueChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Net Revenue',
+                        data: data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3, 
+                        pointBackgroundColor: '#10b981',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8', callback: (val) => '$' + val }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- WIZARD LOGIC ---
+        let wizardAnswers = {};
+        let currentStep = 1;
+        
+        function updateWizardUI() {
+            const backBtn = document.getElementById('wizard-back-btn');
+            if (currentStep > 1) {
+                backBtn.style.display = 'block';
+            } else {
+                backBtn.style.display = 'none';
+            }
+            
+            const stepCounterText = document.getElementById('step-counter-text');
+            if (currentStep <= 5) {
+                stepCounterText.style.display = 'block';
+                document.getElementById('current-step-display').innerText = currentStep;
+            } else {
+                stepCounterText.style.display = 'none';
+            }
+        }
+
+        function goBack() {
+            if (currentStep > 1) {
+                const currentEl = currentStep > 5 ? document.getElementById('step-result') : document.getElementById(`step-${currentStep}`);
+                currentEl.classList.remove('active');
+                
+                currentStep--;
+                document.getElementById(`step-${currentStep}`).classList.add('active');
+                updateWizardUI();
+            }
+        }
+        
+        function selectOption(stepNum, answer) {
+            wizardAnswers[`q${stepNum}`] = answer;
+            
+            const options = document.querySelectorAll(`#step-${stepNum} .wizard-option`);
+            options.forEach(opt => opt.classList.remove('selected'));
+            event.target.classList.add('selected');
+
+            setTimeout(() => {
+                document.getElementById(`step-${stepNum}`).classList.remove('active');
+                currentStep++;
+                
+                if (currentStep <= 5) {
+                    document.getElementById(`step-${currentStep}`).classList.add('active');
+                } else {
+                    generateGamePlan();
+                    document.getElementById('step-result').classList.add('active');
+                }
+                updateWizardUI();
+            }, 400);
+        }
+
+        function generateGamePlan() {
+            let introText = "Based on your needs, The Dragon HMS will build a unified Management Portal. We will deploy:";
+            const industry = wizardAnswers.q1 || "";
+            const features = [];
+
+            if (industry.includes('Automotive')) {
+                introText = "Based on your needs, The Dragon HMS will build a custom Automotive Management Portal. We will deploy:";
+                features.push("<strong>A Parts & Labor Estimating Engine</strong>");
+                features.push("<strong>A Vehicle Status Tracker</strong>");
+            } else if (industry.includes('Financial')) {
+                introText = "Based on your needs, The Dragon HMS will build a Secure Financial Portal. We will deploy:";
+                features.push("<strong>An Encrypted Document Vault for PII</strong>");
+                features.push("<strong>Automated Tax-Season Booking</strong>");
+            } else {
+                if (wizardAnswers.q2 && wizardAnswers.q2.includes('quotes')) features.push("<strong>A Custom Quoting & Invoicing Engine</strong>");
+                if (wizardAnswers.q3 && wizardAnswers.q3.includes('online')) features.push("<strong>An Automated Scheduling Matrix</strong>");
+                if (wizardAnswers.q4 && wizardAnswers.q4.includes('Security')) features.push("<strong>An Encrypted Client Vault</strong>");
+            }
+
+            if (features.length === 0) {
+                features.push("<strong>A Streamlined Dashboard</strong>");
+                features.push("<strong>Secure Client Communications</strong>");
+            }
+
+            let htmlOutput = `<p style="margin-bottom: 12px;">${introText}</p>`;
+            htmlOutput += `<ul style="margin-bottom: 12px; padding-left: 20px;">`;
+            features.forEach(feat => {
+                htmlOutput += `<li style="margin-bottom: 6px;">${feat}</li>`;
+            });
+            htmlOutput += `</ul>`;
+            htmlOutput += `<p>This drastically reduces your reliance on scattered third-party apps.</p>`;
+            
+            document.getElementById('game-plan-container').innerHTML = htmlOutput;
+            
+            const rawScopeText = introText + " " + features.map(f => f.replace(/<\/?[^>]+(>|$)/g, "")).join(", ") + ".";
+            document.getElementById('project_scope').value = rawScopeText + " | Raw Answers: " + JSON.stringify(wizardAnswers);
+        }
+
+        function revealBooking() {
+            document.getElementById('wizard-section').style.display = 'none';
+            document.getElementById('booking-section').style.display = 'block';
+            refreshAvailableSlots();
+        }
+
+        function showAlert(msg) {
+            const box = document.getElementById('alert-box');
+            box.innerText = msg;
+            box.style.display = 'block';
+            setTimeout(() => { box.style.display = 'none'; }, 5000);
+        }
+
+        // --- CALENDAR LOGIC ---
+        let groupedSlots = {};
+        
+        async function refreshAvailableSlots() {
+            const calGrid = document.getElementById('calendar-grid');
+            const timeContainer = document.getElementById('time-slots-container');
+            const btnSubmit = document.getElementById('btn-book-submit');
+            const hiddenSlot = document.getElementById('slot_timestamp');
+            
+            calGrid.innerHTML = '<div style="grid-column: 1 / -1; color: var(--text-muted);">Syncing calendar...</div>';
+            
+            try {
+                const response = await fetch(`/api/available-slots?duration=15`);
+                const result = await response.json();
+                calGrid.innerHTML = ''; 
+                
+                if (result.status === 'success' && Object.keys(result.data.slots).length > 0) {
+                    groupedSlots = result.data.slots;
+                    
+                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    days.forEach(d => {
+                        const th = document.createElement('div');
+                        th.style.cssText = 'font-size: 0.75rem; font-weight: 600; color: var(--text-muted); padding-bottom: 5px;';
+                        th.textContent = d;
+                        calGrid.appendChild(th);
+                    });
+                    
+                    const today = new Date();
+                    const startDay = today.getDay(); 
+                    
+                    for (let i = 0; i < startDay; i++) {
+                        calGrid.appendChild(document.createElement('div'));
+                    }
+                    
+                    for (let i = 0; i < 14; i++) {
+                        const currentDate = new Date(today);
+                        currentDate.setDate(today.getDate() + i);
+                        const dateStr = currentDate.getFullYear() + '-' + String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + String(currentDate.getDate()).padStart(2, '0');
+                                       
+                        const dayCell = document.createElement('div');
+                        dayCell.textContent = currentDate.getDate();
+                        dayCell.style.cssText = 'padding: 8px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; border: 1px solid var(--border-color); transition: all 0.2s;';
+                        
+                        if (groupedSlots[dateStr] && groupedSlots[dateStr].length > 0) {
+                            dayCell.style.backgroundColor = 'var(--bg-card-subtle)';
+                            dayCell.style.color = 'var(--brand-blue-light)';
+                            dayCell.style.fontWeight = '600';
+                            
+                            dayCell.onclick = () => {
+                                document.querySelectorAll('#calendar-grid div[data-has-slots="true"]').forEach(c => {
+                                    c.style.backgroundColor = 'var(--bg-card-subtle)';
+                                    c.style.color = 'var(--brand-blue-light)';
+                                });
+                                dayCell.style.backgroundColor = 'var(--brand-blue)';
+                                dayCell.style.color = '#fff';
+                                renderTimeSlots(dateStr);
+                            };
+                            dayCell.dataset.hasSlots = "true";
+                        } else {
+                            dayCell.style.opacity = '0.3';
+                            dayCell.style.cursor = 'not-allowed';
+                        }
+                        calGrid.appendChild(dayCell);
+                    }
+                } else {
+                    calGrid.innerHTML = '<div style="grid-column: 1 / -1; color: var(--text-muted);">No availability currently configured.</div>';
+                }
+            } catch (err) {
+                calGrid.innerHTML = '<div style="grid-column: 1 / -1; color: var(--danger);">Error loading calendar.</div>';
+            }
+        }
+        
+        function renderTimeSlots(dateStr) {
+            const timeContainer = document.getElementById('time-slots-container');
+            const hiddenSlot = document.getElementById('slot_timestamp');
+            const btnSubmit = document.getElementById('btn-book-submit');
+            
+            timeContainer.innerHTML = '';
+            timeContainer.style.display = 'grid';
+            hiddenSlot.value = ''; 
+            btnSubmit.disabled = true;
+            
+            groupedSlots[dateStr].forEach(slot => {
+                const timeText = slot.label.split(' @ ')[1].split(' - ')[0];
+                
+                const timeBtn = document.createElement('div');
+                timeBtn.textContent = timeText;
+                timeBtn.style.cssText = 'padding: 6px 10px; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--brand-blue); color: var(--text-main); text-align: center; cursor: pointer; transition: all 0.2s;';
+                
+                timeBtn.onclick = () => {
+                    document.querySelectorAll('#time-slots-container div').forEach(b => {
+                        b.style.backgroundColor = 'transparent';
+                        b.style.color = 'var(--text-main)';
+                    });
+                    timeBtn.style.backgroundColor = 'var(--brand-blue)';
+                    timeBtn.style.color = '#fff';
+                    hiddenSlot.value = slot.value;
+                    btnSubmit.disabled = false;
+                };
+                timeContainer.appendChild(timeBtn);
+            });
+        }
+
+        // --- SUBMISSION LOGIC ---
+        const bookSlotForm = document.getElementById('book-slot-form');
+        if (bookSlotForm) {
+            bookSlotForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const btn = document.getElementById('btn-book-submit');
+                const originalText = btn.textContent;
+                btn.textContent = 'Redirecting to Secure Checkout...';
+                btn.disabled = true;
+
+                const formData = new FormData(this);
+                
+                try {
+                    const response = await fetch('/create-checkout-session', {
+                        method: 'POST',
+                        headers: { 
+                            'X-CSRFToken': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success' && result.data.url) {
+                        window.location.href = result.data.url; 
+                    } else {
+                        showAlert(result.message || 'Error initiating checkout.');
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }
+                } catch (err) {
+                    showAlert('Network error communicating with payment gateway.');
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

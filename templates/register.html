@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - The Dragon HMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Dark Grey Backgrounds */
+            --bg-body: #18181c; 
+            --bg-card: #222228; 
+            --border-color: #383842;
+            
+            /* Royal Blue (Primary Brand) */
+            --brand-blue: #2563eb; 
+            --brand-blue-light: #3b82f6; 
+            --brand-blue-dark: #1d4ed8;
+            --blue-glow: rgba(37, 99, 235, 0.45); 
+
+            /* Smokey Orange (Accents/Highlights) */
+            --brand-orange: #d97736;
+            --brand-orange-light: #f28b46;
+            
+            /* Typography & Colors */
+            --text-main: #f8fafc; 
+            --text-muted: #94a3b8;
+            --font-display: 'Playfair Display', serif; 
+            --font-body: 'Inter', sans-serif;
+            
+            /* Status Colors */
+            --danger: #ef4444; --danger-bg: rgba(239, 68, 68, 0.15);
+            --success: #10b981; --success-bg: rgba(16, 185, 129, 0.15);
+            
+            /* Spacing & Radii */
+            --space-xs: 0.5rem; --space-sm: 0.75rem; --space-md: 1rem; 
+            --space-lg: 1.5rem; --space-xl: 2rem;
+            --radius-md: 10px; --radius-lg: 18px;
+            --shadow-md: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+            --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: var(--font-body); 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            line-height: 1.6; 
+            -webkit-font-smoothing: antialiased; 
+            background-image: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 50%); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center; 
+        }
+
+        .auth-container { 
+            width: 100%; 
+            max-width: 420px; 
+            padding: 20px;
+            animation: fadeInUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+        }
+
+        .auth-card { 
+            background: var(--bg-card); 
+            border-radius: var(--radius-lg); 
+            padding: var(--space-xl); 
+            box-shadow: var(--shadow-md); 
+            border: 1px solid var(--border-color); 
+            position: relative; 
+            overflow: hidden; 
+        }
+
+        .auth-card::before { 
+            content: ''; 
+            position: absolute; 
+            top: 0; left: 0; right: 0; 
+            height: 3px; 
+            background: linear-gradient(90deg, transparent, var(--brand-blue), transparent); 
+            opacity: 0.8; 
+        }
+
+        .back-btn { 
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            color: var(--text-muted); 
+            text-decoration: none; 
+            font-size: 0.85rem; 
+            font-weight: 500; 
+            transition: color var(--transition-base); 
+        }
+        
+        .back-btn:hover { 
+            color: var(--brand-orange-light); 
+        }
+
+        h1 { 
+            font-family: var(--font-display); 
+            font-size: 2rem; 
+            text-align: center; 
+            margin-bottom: var(--space-xs); 
+            margin-top: 10px;
+        }
+        
+        .text-gradient { 
+            background: linear-gradient(135deg, var(--brand-blue-light) 0%, var(--brand-blue) 100%); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        }
+
+        .subtitle { 
+            text-align: center; 
+            color: var(--text-muted); 
+            font-size: 0.9rem; 
+            margin-bottom: var(--space-lg); 
+        }
+
+        .form-group { margin-bottom: var(--space-md); }
+        .form-group label { 
+            display: block; 
+            font-weight: 500; 
+            font-size: 0.85rem; 
+            margin-bottom: var(--space-xs); 
+            color: var(--text-muted); 
+        }
+        
+        .form-control { 
+            width: 100%; 
+            padding: var(--space-sm) var(--space-md); 
+            border: 1px solid var(--border-color); 
+            border-radius: var(--radius-md); 
+            font-family: var(--font-body); 
+            font-size: 15px; 
+            background-color: #1a1a1f; 
+            color: var(--text-main); 
+            color-scheme: dark; 
+            transition: all var(--transition-base);
+        }
+        
+        .form-control:focus { 
+            outline: none; 
+            border-color: var(--brand-blue); 
+            box-shadow: 0 0 0 3px var(--blue-glow); 
+        }
+
+        .password-hint {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .btn-blue { 
+            width: 100%;
+            display: inline-flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 10px 14px; 
+            border-radius: var(--radius-md); 
+            font-weight: 600; 
+            font-size: 0.95rem; 
+            cursor: pointer; 
+            border: none; 
+            transition: all var(--transition-base);
+            background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-blue-dark) 100%); 
+            color: #ffffff; 
+            box-shadow: 0 4px 15px var(--blue-glow); 
+            margin-top: var(--space-sm);
+        }
+        
+        .btn-blue:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 20px var(--blue-glow); 
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: var(--space-lg);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .auth-footer a {
+            color: var(--brand-orange-light);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color var(--transition-base);
+        }
+
+        .auth-footer a:hover {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(242, 139, 70, 0.45);
+        }
+
+        .alert { 
+            padding: var(--space-sm) var(--space-md); 
+            border-radius: var(--radius-md); 
+            font-size: 0.85rem; 
+            margin-bottom: var(--space-md); 
+            text-align: center;
+            font-weight: 500;
+        }
+        .alert-success { background-color: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .alert-danger { background-color: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .alert-info { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+        @keyframes fadeInUp { 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <a href="{{ url_for('home') }}" class="back-btn">&larr; Back</a>
+            
+            <h1>The Dragon <span class="text-gradient">HMS</span>.</h1>
+            <p class="subtitle">Create an account to access the portal.</p>
+
+            <!-- SECURITY: Safe rendering of Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category | e }}">{{ message | e }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('register') }}">
+                <!-- SECURITY: CSRF Token Enforcement -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control" value="{{ email | default('') }}" required autocomplete="email" autofocus>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" value="{{ password | default('') }}" required autocomplete="new-password">
+                    <span class="password-hint">Must be 12+ characters and contain at least one uppercase letter, lowercase letter, and number.</span>
+                </div>
+                
+                <button type="submit" class="btn-blue">Create Account Securely</button>
+            </form>
+
+            <div class="auth-footer">
+                Already have an account? <a href="{{ url_for('login') }}">Log in here</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
