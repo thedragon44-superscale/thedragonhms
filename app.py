@@ -1191,7 +1191,7 @@ def messages():
                 SELECT sender_id, encrypted_content, is_read, to_char(created_at, 'Mon DD, YYYY HH:MI AM') as timestamp
                 FROM messages
                 WHERE (sender_id = %s AND receiver_id = %s) OR (sender_id = %s AND receiver_id = %s)
-                ORDER BY created_at DESC
+                ORDER BY created_at ASC
             """, (session['user_id'], target_id, target_id, session['user_id']))
             
             raw_msgs = cur.fetchall()

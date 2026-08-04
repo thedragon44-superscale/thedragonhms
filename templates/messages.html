@@ -245,7 +245,7 @@
         const btnSend = document.getElementById('btn-send');
 
         if (chatBox) {
-            chatBox.scrollTop = 0;
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
         const escapeHTML = (str) => {
@@ -292,8 +292,8 @@
                                 <div class="message-time">${safeTime}</div>
                             </div>
                         `;
-                        chatBox.insertAdjacentHTML('afterbegin', msgHTML);
-                        chatBox.scrollTop = 0;
+                        chatBox.insertAdjacentHTML('beforeend', msgHTML);
+                        chatBox.scrollTop = chatBox.scrollHeight;
                         messageInput.value = '';
                     } else {
                         alert(result.message || 'Error sending message');
