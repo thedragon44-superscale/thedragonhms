@@ -319,6 +319,18 @@ def contact():
     message = request.form.get('message')
     
     # -----------------------------------------
+    # 🛡️ TARGETED BLOCKLIST TRAP
+    # -----------------------------------------
+    blocklist = ['robertped', 'eric jones', 'talkwithwebvisitor']
+    search_string = f"{name} {email} {message}".lower()
+    
+    if any(bad_actor in search_string for bad_actor in blocklist):
+        logger.warning(f"🛑 SPAM BLOCKED: Blocklist triggered by {name} ({email})")
+        flash("Inquiry sent successfully. The Dragon HMS team will be in touch shortly.", "success")
+        return redirect(url_for('home'))
+    # -----------------------------------------
+
+    # -----------------------------------------
     # 🛡️ HONEYPOT TRAP
     # -----------------------------------------
     honeypot = request.form.get('website')
