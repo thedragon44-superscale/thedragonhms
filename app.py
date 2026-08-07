@@ -324,7 +324,18 @@ def contact():
     honeypot = request.form.get('website')
     if honeypot:
         logger.warning(f"🛑 SPAM BLOCKED: Bot trap triggered by {email}")
-        # We flash a success message so the bot thinks it succeeded and moves on
+        flash("Inquiry sent successfully. The Dragon HMS team will be in touch shortly.", "success")
+        return redirect(url_for('home'))
+    # -----------------------------------------
+    
+    # -----------------------------------------
+    # 🛡️ LINK & KEYQUARANTINE TRAP
+    # -----------------------------------------
+    msg_lower = message.lower() if message else ""
+    spam_triggers = ['http://', 'https://', 'www.', '<a href', 'seo services', 'crypto', 'bitcoin']
+    
+    if any(trigger in msg_lower for trigger in spam_triggers):
+        logger.warning(f"🛑 SPAM BLOCKED: Malicious link/keyword detected from {email}")
         flash("Inquiry sent successfully. The Dragon HMS team will be in touch shortly.", "success")
         return redirect(url_for('home'))
     # -----------------------------------------
@@ -363,7 +374,6 @@ def contact():
 
     flash("Inquiry sent successfully. The Dragon HMS team will be in touch shortly.", "success")
     return redirect(url_for('home'))
-    
     
 @app.route('/register', methods=['GET', 'POST'])
 @limiter.limit("5 per minute")
