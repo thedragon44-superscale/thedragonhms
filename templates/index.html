@@ -252,6 +252,13 @@
             <button onclick="openModal('wizard-modal')" class="btn btn-blue">Scope Your Project</button>
             <button onclick="openModal('tech-stack-modal')" class="btn btn-orange-outline">View Our Tech Stack</button>
             <button onclick="openContactModal()" class="btn btn-primary">💬 Reach Out</button>
+            <button onclick="openUiModal()" class="btn btn-primary" style="border-color: var(--brand-blue-light);">✨ Capabilities Showcase</button>
+        </div>
+        
+        <!-- Dynamic Feature Buttons (Appears under the main buttons) -->
+        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+            <button onclick="openDnsModal()" class="special-feature-btn btn-dns">▶ Fingerprint Audit</button>
+            <button onclick="openCsvModal()" class="special-feature-btn btn-csv">📊 POS Ledger Analyzer</button>
         </div>
     </header>
 
@@ -436,12 +443,7 @@
         </div>
     </div>
 
-    <!-- Floating Action Stack -->
-    <div class="floating-action-stack">
-        <button class="ui-switcher-btn" onclick="openUiModal()">✨ Capabilities Showcase</button>
-        <button onclick="openDnsModal()" class="special-feature-btn btn-dns">▶ Fingerprint Audit</button>
-        <button onclick="openCsvModal()" class="special-feature-btn btn-csv">📊 POS Ledger Analyzer</button>
-    </div>
+    
 
     <!-- Reach Out Modal -->
     <div id="contact-modal" class="modal-overlay" onclick="closeContactModal(event)" style="z-index: 3600;">
